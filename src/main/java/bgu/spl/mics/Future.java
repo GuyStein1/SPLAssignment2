@@ -11,12 +11,19 @@ import java.util.concurrent.TimeUnit;
  * No public constructor is allowed except for the empty constructor.
  */
 public class Future<T> {
-	
+
+	// Added fields
+	private T result;
+	private boolean isDone;
+	// A private lock object used for synchronization.
+	private final Object lock = new Object();
+
 	/**
 	 * This should be the only public constructor in this class.
 	 */
 	public Future() {
-		//TODO: implement this
+		result = null;
+		isDone = false;
 	}
 	
 	/**
@@ -28,23 +35,38 @@ public class Future<T> {
      * 	       
      */
 	public T get() {
-		//TODO: implement this.
-		return null;
+		synchronized (lock) {
+			while (!isDone) { // Check if future is resolved
+				try {
+					lock.wait(); // Wait until notified by resolve()
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt(); // Restore interrupt status
+				}
+			}
+			return result;
+		}
 	}
 	
 	/**
      * Resolves the result of this Future object.
      */
 	public void resolve (T result) {
-		//TODO: implement this.
+		synchronized (lock) {
+			if (!isDone) { // Ensure the result is set only once
+				this.result = result;  // Store the result
+				isDone = true;         // Mark the Future as resolved
+				lock.notifyAll();      // Notify all threads waiting on the lock
+			}
+		}
 	}
 	
 	/**
      * @return true if this object has been resolved, false otherwise
      */
 	public boolean isDone() {
-		//TODO: implement this.
-		return false;
+		synchronized (lock) {
+			return isDone; // Return the state of the Future
+		}
 	}
 	
 	/**
@@ -59,8 +81,22 @@ public class Future<T> {
      *         elapsed, return null.
      */
 	public T get(long timeout, TimeUnit unit) {
-		//TODO: implement this.
-		return null;
+		synchronized (lock) {
+			if (!isDone) { // Wait only if the Future is not resolved
+				try {
+					long timeoutMillis = unit.toMillis(timeout); // Convert timeout to milliseconds
+					long endTime = System.currentTimeMillis() + timeoutMillis; // Calculate end time
+					while (!isDone && System.currentTimeMillis() < endTime) {
+						long remainingTime = endTime - System.currentTimeMillis();
+						if (remainingTime > 0) {
+							lock.wait(remainingTime); // Wait for the remaining time
+						}
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt(); // Restore interrupt status
+				}
+			}
+			return isDone ? result : null; // Return result if resolved, otherwise null
+		}
 	}
-
 }
