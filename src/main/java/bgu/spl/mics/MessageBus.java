@@ -73,7 +73,7 @@ public interface MessageBus {
      * related to {@code m} in this message-bus. If {@code m} was not
      * registered, nothing should happen.
      * <p>
-     * @param m the micro-service to unregister.
+     * @param m the microservice to unregister.
      */
     void unregister(MicroService m);
 
