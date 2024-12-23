@@ -17,16 +17,16 @@ class FutureTest {
         future.resolve("Test Result");
 
         // Assert
-        assertTrue(future.isDone()); // Check if future is marked as done
-        assertEquals("Test Result", future.get()); // Check the result is set correctly
+        assertTrue(future.isDone(), "Future should be marked as done after resolve.");
+        assertEquals("Test Result", future.get(), "The result should match the resolved value.");
     }
 
     @Test
-    void testGetBlocksUntilResolved() {
+    void testGetBlocksUntilResolved() throws InterruptedException {
         // Arrange
         Future<String> future = new Future<>();
 
-        // Act & Assert
+        // Act
         Thread resolverThread = new Thread(() -> {
             try {
                 Thread.sleep(100); // Simulate delay before resolving
@@ -37,7 +37,13 @@ class FutureTest {
         });
         resolverThread.start();
 
-        assertEquals("Delayed Result", future.get()); // `get()` should block until resolved
+        long startTime = System.currentTimeMillis();
+        String result = future.get(); // `get()` should block until resolved
+        long elapsedTime = System.currentTimeMillis() - startTime;
+
+        // Assert
+        assertEquals("Delayed Result", result, "The result should match the resolved value.");
+        assertTrue(elapsedTime >= 100, "get() should block until resolve is called.");
     }
 
     @Test
@@ -49,11 +55,11 @@ class FutureTest {
         String result = future.get(500, TimeUnit.MILLISECONDS);
 
         // Assert
-        assertNull(result); // Since it wasn't resolved, expect null
+        assertNull(result, "get(timeout) should return null if Future is not resolved within the timeout.");
     }
 
     @Test
-    void testGetWithTimeoutReturnsResultIfResolvedBeforeTimeout() {
+    void testGetWithTimeoutReturnsResultIfResolvedBeforeTimeout() throws InterruptedException {
         // Arrange
         Future<String> future = new Future<>();
 
@@ -71,7 +77,7 @@ class FutureTest {
         String result = future.get(500, TimeUnit.MILLISECONDS);
 
         // Assert
-        assertEquals("Result Before Timeout", result); // Ensure correct result is returned
+        assertEquals("Result Before Timeout", result, "get(timeout) should return the resolved result if resolved before the timeout.");
     }
 
     @Test
@@ -84,6 +90,27 @@ class FutureTest {
         future.resolve("Second Result"); // Attempt to resolve again
 
         // Assert
-        assertEquals("First Result", future.get()); // Should remain the first result
+        assertEquals("First Result", future.get(), "The result should not change after the first resolve.");
+    }
+
+    @Test
+    void testIsDoneReturnsFalseInitially() {
+        // Arrange
+        Future<String> future = new Future<>();
+
+        // Act & Assert
+        assertFalse(future.isDone(), "Future should not be marked as done before resolve.");
+    }
+
+    @Test
+    void testIsDoneReturnsTrueAfterResolve() {
+        // Arrange
+        Future<String> future = new Future<>();
+
+        // Act
+        future.resolve("Test Result");
+
+        // Assert
+        assertTrue(future.isDone(), "Future should be marked as done after resolve.");
     }
 }
