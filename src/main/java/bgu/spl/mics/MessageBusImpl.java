@@ -37,6 +37,11 @@ public class MessageBusImpl implements MessageBus {
 		eventFutures = new ConcurrentHashMap<>();
 	}
 
+	// Public method to get the singleton instance
+	public static MessageBusImpl getInstance() {
+		return SingletonHolder.instance;
+	}
+
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
 		// Create a new queue if event type doesn't have a queue in the hash map.
