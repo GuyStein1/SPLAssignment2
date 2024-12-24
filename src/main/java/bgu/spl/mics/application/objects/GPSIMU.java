@@ -1,9 +1,13 @@
 package bgu.spl.mics.application.objects;
+import java.util.List;
 
 /**
  * Represents the robot's GPS and IMU system.
  * Provides information about the robot's position and movement.
  */
 public class GPSIMU {
-    // TODO: Define fields and methods.
+    // Fields
+    private int currentTick; // Current time in ticks
+    private STATUS GPSIMUStatus; // Enum representing the GPS/IMU status (Up, Down, Error)
+    private List<Pose> poseList; // List of time-stamped poses
 }

@@ -5,6 +5,7 @@ package bgu.spl.mics.application.objects;
  * It contains information such as the object's ID and description.
  */
 public class DetectedObject {
-
-    // TODO: Define fields and methods.
+    // Fields
+    private String id; // Unique identifier for the detected object
+    private String description; // Description of the object
 }
