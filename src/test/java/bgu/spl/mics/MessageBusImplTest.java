@@ -7,6 +7,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+import java.util.ArrayList;
+
 class MessageBusImplTest {
 
     private MessageBusImpl messageBus;
@@ -136,5 +139,100 @@ class MessageBusImplTest {
 
         // Assert
         assertNull(future, "sendEvent should return null if no MicroService is subscribed to the event.");
+    }
+
+    @Test
+    void testRoundRobinEventDeliveryWithManyMicroServices() throws InterruptedException {
+        // Arrange
+        class TestEvent implements Event<String> {}
+        TestEvent testEvent = new TestEvent();
+
+        int numMicroServices = 50; // Test with 50 MicroServices
+        List<MicroService> microServices = new ArrayList<>();
+
+        // Register and subscribe all MicroServices to the event
+        for (int i = 0; i < numMicroServices; i++) {
+            MicroService m = new MicroService("MicroService" + i) {
+                @Override
+                protected void initialize() {
+                    // No initialization logic
+                }
+            };
+            microServices.add(m);
+            messageBus.register(m);
+            messageBus.subscribeEvent(TestEvent.class, m);
+        }
+
+        // Act
+        // Send events equal to the number of MicroServices
+        List<Future<String>> futures = new ArrayList<>();
+        for (int i = 0; i < numMicroServices; i++) {
+            futures.add(messageBus.sendEvent(new TestEvent()));
+        }
+
+        // Assert
+        // Each MicroService should receive exactly one event
+        for (MicroService m : microServices) {
+            Message receivedMessage = messageBus.awaitMessage(m);
+            assertTrue(receivedMessage instanceof TestEvent, "Each MicroService should receive an event.");
+        }
+
+        // Ensure all futures are resolved
+        for (Future<String> future : futures) {
+            assertNotNull(future, "Each event should create a Future.");
+            assertFalse(future.isDone(), "Futures should be unresolved initially.");
+        }
+    }
+
+    @Test
+    void testConcurrentMessageHandling() throws InterruptedException {
+        // Arrange
+        class TestEvent implements Event<String> {}
+        class TestBroadcast implements Broadcast {}
+
+        int numMicroServices = 20;
+        List<MicroService> microServices = new ArrayList<>();
+
+        // Register and subscribe all MicroServices
+        for (int i = 0; i < numMicroServices; i++) {
+            MicroService m = new MicroService("MicroService" + i) {
+                @Override
+                protected void initialize() {
+                    // No initialization logic
+                }
+            };
+            microServices.add(m);
+            messageBus.register(m);
+            messageBus.subscribeEvent(TestEvent.class, m);
+            messageBus.subscribeBroadcast(TestBroadcast.class, m);
+        }
+
+        // Act
+        // Start multiple threads to send messages concurrently
+        Thread eventSender = new Thread(() -> {
+            for (int i = 0; i < 100; i++) {
+                messageBus.sendEvent(new TestEvent());
+            }
+        });
+
+        Thread broadcastSender = new Thread(() -> {
+            for (int i = 0; i < 50; i++) {
+                messageBus.sendBroadcast(new TestBroadcast());
+            }
+        });
+
+        eventSender.start();
+        broadcastSender.start();
+
+        // Assert
+        for (MicroService m : microServices) {
+            for (int i = 0; i < 5; i++) { // Check that each MicroService processes multiple messages
+                Message message = messageBus.awaitMessage(m);
+                assertNotNull(message, "Each MicroService should receive messages.");
+            }
+        }
+
+        eventSender.join();
+        broadcastSender.join();
     }
 }
