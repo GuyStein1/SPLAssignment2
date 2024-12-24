@@ -47,17 +47,16 @@ public class MessageBusImpl implements MessageBus {
 		// Create a new queue if event type doesn't have a queue in the hash map.
 		eventSubscribers.putIfAbsent(type, new ConcurrentLinkedQueue<>());
 		// Add the MicroService to the list of subscribers for the given event type.
-		Queue<MicroService> queue = eventSubscribers.get(type);
-		// Lock the queue to avoid interference with sendEvent or unregister
-		synchronized (queue) {
-			queue.add(m);
+		Queue<MicroService> subscribers = eventSubscribers.get(type);
+		// Lock the queue to avoid interference with sendEvent or unregister, Synchronize on shared object explicitly
+		synchronized (subscribers) {
+			subscribers.add(m);
 		}
 	}
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// Create a new list if broadcast type doesn't have a list in the hash map.
-		// Using CopyOnWriteArrayList ensures thread-safe iteration without additional synchronization
 		broadcastSubscribers.putIfAbsent(type, new CopyOnWriteArrayList<>());
 		// Add the MicroService to the list of subscribers for the given broadcast type.
 		broadcastSubscribers.get(type).add(m);
@@ -122,9 +121,9 @@ public class MessageBusImpl implements MessageBus {
 		microServiceQueues.remove(m);
 
 		// Remove from all event subscription lists
-		for (Queue<MicroService> queue : eventSubscribers.values()) {
-			synchronized (queue) { // Lock only the specific queue
-				queue.remove(m);
+		for (Queue<MicroService> subscribers : eventSubscribers.values()) {
+			synchronized (subscribers) { // Lock only the specific queue
+				subscribers.remove(m);// Synchronize on shared object explicitly
 			}
 		}
 		for (List<MicroService> list : broadcastSubscribers.values()) {
