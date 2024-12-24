@@ -8,6 +8,6 @@ import java.util.List;
 public class GPSIMU {
     // Fields
     private int currentTick; // Current time in ticks
-    private STATUS GPSIMUStatus; // Enum representing the GPS/IMU status (Up, Down, Error)
+    private STATUS status; // Enum representing the GPS/IMU status (Up, Down, Error)
     private List<Pose> poseList; // List of time-stamped poses
 }

@@ -1,10 +1,13 @@
 package bgu.spl.mics.application.objects;
+import java.util.List;
 
 /**
  * LiDarDataBase is a singleton class responsible for managing LiDAR data.
  * It provides access to cloud point data and other relevant information for tracked objects.
  */
 public class LiDarDataBase {
+    // Fields
+    private List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
 
     /**
      * Returns the singleton instance of LiDarDataBase.
