@@ -62,6 +62,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> void complete(Event<T> e, T result) {
 		// Resolve the Future associated with the given event, allowing the sender to retrieve the result.
+		@SuppressWarnings("unchecked") // Suppress unchecked cast warning
 		Future<T> future = (Future<T>) eventFutures.get(e);
 		if (future != null) {
 			future.resolve(result);

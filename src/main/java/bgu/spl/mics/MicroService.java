@@ -1,5 +1,7 @@
 package bgu.spl.mics;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * The MicroService is an abstract class that any micro-service in the system
  * must extend. The abstract MicroService class is responsible to get and
@@ -22,6 +24,11 @@ public abstract class MicroService implements Runnable {
 
     private boolean terminated = false;
     private final String name;
+    // Added fields
+    // Singleton instance of MessageBus
+    private final MessageBus messageBus = MessageBusImpl.getInstance();
+    // Mapping of message types to their callbacks
+    private final ConcurrentHashMap<Class<? extends Message>, Callback<? extends Message>> callbacksMap = new ConcurrentHashMap<>();
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
@@ -53,7 +60,10 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
-        //TODO: implement this.
+        // Register this microservice for the event type
+        messageBus.subscribeEvent(type, this);
+        // Store the callback associated with the event type
+        callbacksMap.put(type, callback);
     }
 
     /**
@@ -77,7 +87,10 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-        //TODO: implement this.
+        // Register this microservice for the specified broadcast type
+        messageBus.subscribeBroadcast(type, this);
+        // Store the callback associated with the broadcast type
+        callbacksMap.put(type, callback);
     }
 
     /**
@@ -93,8 +106,8 @@ public abstract class MicroService implements Runnable {
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
-        //TODO: implement this.
-        return null; //TODO: delete this line :)
+        // Send event and return its associated Future
+        return messageBus.sendEvent(e);
     }
 
     /**
@@ -104,7 +117,8 @@ public abstract class MicroService implements Runnable {
      * @param b The broadcast message to send
      */
     protected final void sendBroadcast(Broadcast b) {
-        //TODO: implement this.
+        // Send the broadcast message
+        messageBus.sendBroadcast(b);
     }
 
     /**
@@ -118,7 +132,8 @@ public abstract class MicroService implements Runnable {
      *               {@code e}.
      */
     protected final <T> void complete(Event<T> e, T result) {
-        //TODO: implement this.
+        // Resolve the event with the provided result
+        messageBus.complete(e, result);
     }
 
     /**
@@ -143,15 +158,31 @@ public abstract class MicroService implements Runnable {
     }
 
     /**
-     * The entry point of the micro-service. TODO: you must complete this code
+     * The entry point of the micro-service.
      * otherwise you will end up in an infinite loop.
      */
     @Override
     public final void run() {
-        initialize();
-        while (!terminated) {
-            System.out.println("NOT IMPLEMENTED!!!"); //TODO: you should delete this line :)
+        messageBus.register(this); // Register this microservice with the message bus
+        initialize(); // Perform initialization such as subscriptions
+        try {
+            while (!terminated) { // Main message loop
+                // Wait for and retrieve the next message. This is a blocking call that may throw InterruptedException if the thread is interrupted.
+                Message message = messageBus.awaitMessage(this);
+                // Retrieve the appropriate callback
+                @SuppressWarnings("unchecked") // Suppress unchecked cast warning
+                Callback<Message> callback = (Callback<Message>) callbacksMap.get(message.getClass());
+                if (callback != null) {
+                    callback.call(message); // Execute the callback
+                }
+            }
+        } catch (InterruptedException e) {
+            // Restore interrupt status to allow higher-level code to detect the interruption.
+            Thread.currentThread().interrupt();
+        } finally {
+            // Ensure the microservice is properly unregistered.
+            messageBus.unregister(this);
         }
     }
-
 }
+

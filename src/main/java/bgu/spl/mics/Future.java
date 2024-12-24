@@ -36,6 +36,7 @@ public class Future<T> {
 	 */
 	public T get() {
 		synchronized (lock) {
+			// Block until the result is resolved
 			while (!isDone) { // Check if future is resolved
 				try {
 					lock.wait(); // Wait until notified by resolve()
@@ -65,7 +66,7 @@ public class Future<T> {
 	 */
 	public boolean isDone() {
 		synchronized (lock) {
-			return isDone; // Return the state of the Future
+			return isDone; // Return whether the Future is resolved
 		}
 	}
 
