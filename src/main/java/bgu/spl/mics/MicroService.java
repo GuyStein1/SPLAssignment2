@@ -170,7 +170,12 @@ public abstract class MicroService implements Runnable {
                 // Wait for and retrieve the next message. This is a blocking call that may throw InterruptedException if the thread is interrupted.
                 Message message = messageBus.awaitMessage(this);
                 // Retrieve the appropriate callback
-                @SuppressWarnings("unchecked") // Suppress unchecked cast warning
+                // The cast to (Callback<Message>) is safe because:
+                // 1. The callbacksMap ensures that the key (message.getClass()) maps to a callback
+                //    that matches the message type when subscribeEvent or subscribeBroadcast is called.
+                // 2. The message type is determined at runtime and matches the callback type.
+                // The warning is suppressed because Java's type system cannot guarantee this at compile-time.
+                @SuppressWarnings("unchecked")
                 Callback<Message> callback = (Callback<Message>) callbacksMap.get(message.getClass());
                 if (callback != null) {
                     callback.call(message); // Execute the callback
