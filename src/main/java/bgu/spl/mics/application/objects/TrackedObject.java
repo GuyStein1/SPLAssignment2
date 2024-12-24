@@ -6,5 +6,26 @@ package bgu.spl.mics.application.objects;
  * time of tracking, and coordinates in the environment.
  */
 public class TrackedObject {
-    // TODO: Define fields and methods.
+    /**
+     * The unique identifier of the tracked object.
+     */
+    private String id;
+
+    /**
+     * The time (in some unit) when the object was tracked.
+     */
+    private int time;
+
+    /**
+     * A description of the tracked object.
+     */
+    private String description;
+
+    /**
+     * The coordinates of the tracked object, represented as an array of CloudPoint objects.
+     * Each CloudPoint represents a point in the 3D environment.
+     */
+    private CloudPoint[] coordinates;
+
+    // Getters, setters, and additional methods can be added as needed.
 }
