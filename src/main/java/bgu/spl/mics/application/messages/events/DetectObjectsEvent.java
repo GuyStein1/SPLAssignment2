@@ -9,7 +9,7 @@ import java.util.List;
  * DetectObjectsEvent is sent by a CameraService to request LiDAR workers
  * to process and track detected objects.
  */
-public class DetectObjectsEvent implements Event<DetectedObject> {
+public class DetectObjectsEvent implements Event<Boolean> {
 
     private final int time; // The time at which the objects were detected.
     private final List<DetectedObject> detectedObjects; // List of detected objects.

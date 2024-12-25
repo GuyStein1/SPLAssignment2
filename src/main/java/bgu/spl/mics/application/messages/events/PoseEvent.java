@@ -6,7 +6,7 @@ import bgu.spl.mics.application.objects.Pose;
 /**
  * PoseEvent is sent by the PoseService to provide the robot's current pose to the FusionSLAM service.
  */
-public class PoseEvent implements Event<Pose> {
+public class PoseEvent implements Event<Void> {
 
     // Fields
     private final Pose pose;
