@@ -94,6 +94,11 @@ public class Camera {
      * @return True if there are no more future detections, false otherwise.
      */
     public boolean hasNoMoreDetections(int currentTick) {
-        return detectedObjectsList.stream().noneMatch(detection -> detection.getTime() > currentTick);
+        for (StampedDetectedObjects detection : detectedObjectsList) {
+            if (detection.getTime() > currentTick) {
+                return false; // There are future detections
+            }
+        }
+        return true; // No future detections
     }
 }
