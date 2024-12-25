@@ -7,6 +7,6 @@ package bgu.spl.mics.application.objects;
 public class CloudPoint {
 
     // Fields
-    private int x; // X-coordinate
-    private int y; // Y-coordinate
+    private double x; // X-coordinate
+    private double y; // Y-coordinate
 }

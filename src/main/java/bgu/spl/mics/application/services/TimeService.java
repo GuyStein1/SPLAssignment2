@@ -1,7 +1,7 @@
 package bgu.spl.mics.application.services;
 
-import bgu.spl.mics.application.messages.TickBroadcast;
-import bgu.spl.mics.application.messages.TerminatedBroadcast;
+import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
+import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
 import bgu.spl.mics.MicroService;
 
 /**
@@ -26,6 +26,27 @@ public class TimeService extends MicroService {
         this.duration = Duration;
     }
 
+    // Added constructor for testing
+    public TimeService(String[] args) {
+        super("TimeService");
+
+        // Parse and validate args
+        if (args == null || args.length != 2) {
+            throw new IllegalArgumentException("TimeService expects two arguments: tickTime and duration.");
+        }
+
+        try {
+            this.tickTime = Integer.parseInt(args[0]); // Parse tickTime
+            this.duration = Integer.parseInt(args[1]); // Parse duration
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("TimeService expects both tickTime and duration to be positive integers.");
+        }
+
+        if (this.tickTime <= 0 || this.duration <= 0) {
+            throw new IllegalArgumentException("Both tickTime and duration must be greater than 0.");
+        }
+    }
+
     /**
      * Initializes the TimeService.
      * Starts broadcasting TickBroadcast messages and terminates after the specified duration.
@@ -44,7 +65,7 @@ public class TimeService extends MicroService {
                     Thread.sleep(tickTime);
                 }
                 // After all ticks are complete, broadcast TerminatedBroadcast
-                sendBroadcast(new TerminatedBroadcast());
+                sendBroadcast(new TerminatedBroadcast(getName()));
                 System.out.println("TimeService broadcasted TerminatedBroadcast.");
             } catch (InterruptedException e) {
                 System.out.println("TimeService interrupted. Exiting...");
