@@ -2,6 +2,7 @@ package bgu.spl.mics.application.objects;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents objects detected by the camera at a specific timestamp.
@@ -21,11 +22,10 @@ public class StampedDetectedObjects {
      */
     public StampedDetectedObjects(int time, List<DetectedObject> detectedObjects) {
         this.time = time;
-        // Use a thread-safe, unmodifiable list for detected objects
-        // Defensive copy protects against external modifications to the provided list
+        // Use CopyOnWriteArrayList for thread-safe read-mostly access
         this.detectedObjects = detectedObjects != null
-                ? Collections.synchronizedList(new ArrayList<>(detectedObjects))
-                : Collections.synchronizedList(new ArrayList<>());
+                ? new CopyOnWriteArrayList<>(detectedObjects)
+                : new CopyOnWriteArrayList<>();
     }
 
     /**
@@ -40,13 +40,10 @@ public class StampedDetectedObjects {
     /**
      * Get the list of detected objects at this timestamp.
      *
-     * @return A thread-safe copy of the list of detected objects.
+     * @return An immutable copy of the list for safe read access.
      */
     public List<DetectedObject> getDetectedObjects() {
-        synchronized (detectedObjects) {
-            // Prevent concurrent modification issues by copying
-            return new ArrayList<>(detectedObjects);
-        }
+        return Collections.unmodifiableList(new ArrayList<>(detectedObjects)); // Safe for readers
     }
 
     /**
@@ -55,9 +52,7 @@ public class StampedDetectedObjects {
      * @return The count of detected objects in the list.
      */
     public int getDetectedObjectCount() {
-        synchronized (detectedObjects) {
-            return detectedObjects.size(); // Thread-safe size access
-        }
+        return detectedObjects.size(); // No synchronization needed (read-safe in CopyOnWriteArrayList)
     }
 }
 
