@@ -86,4 +86,14 @@ public class Camera {
         }
         return null; // Return null if no detections are found at the given time
     }
+
+    /**
+     * Checks if there are any future detections remaining in the camera.
+     *
+     * @param currentTick The current simulation tick.
+     * @return True if there are no more future detections, false otherwise.
+     */
+    public boolean hasNoMoreDetections(int currentTick) {
+        return detectedObjectsList.stream().noneMatch(detection -> detection.getTime() > currentTick);
+    }
 }

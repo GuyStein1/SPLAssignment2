@@ -14,6 +14,7 @@ import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
 import bgu.spl.mics.application.objects.Camera;
 import bgu.spl.mics.application.objects.StampedDetectedObjects;
 import bgu.spl.mics.application.objects.StatisticalFolder;
+import bgu.spl.mics.application.objects.STATUS;
 
 import java.util.*;
 
@@ -53,11 +54,31 @@ public class CameraService extends MicroService {
 
         // Subscribe to TickBroadcast
         subscribeBroadcast(TickBroadcast.class, tick -> {
+
+            // Check camera status before processing
+            if (camera.getStatus() != STATUS.UP) {
+                System.out.println(getName() + " is not operational. Skipping tick processing.");
+                return;
+            }
+
             int currentTick = tick.getCurrentTick();
 
             // Check for new detections to queue
             StampedDetectedObjects newDetections = camera.getStampedDetectedObjectsAtTime(currentTick);
             if (newDetections != null) {
+                // Check for errors in the new detections
+                boolean hasError = newDetections.getDetectedObjects().stream()
+                        .anyMatch(detectedObject -> "ERROR".equals(detectedObject.getId()));
+
+                if (hasError) {
+                    System.out.println(getName() + " detected an error in tick " + currentTick + ". Sending CrashedBroadcast.");
+                    camera.setStatus(STATUS.ERROR); // Update camera status to ERROR
+                    sendBroadcast(new CrashedBroadcast(getName()));
+                    terminate();
+                    return; // Stop further processing
+                }
+
+                // Add valid detections to the queue
                 detections.add(newDetections);
             }
 
@@ -70,11 +91,20 @@ public class CameraService extends MicroService {
                 // Update StatisticalFolder
                 StatisticalFolder.getInstance().incrementDetectedObjects(detectionToSend.getDetectedObjects().size());
             }
+
+            // Check if the camera has no more detections
+            if (detections.isEmpty() && camera.hasNoMoreDetections(currentTick)) {
+                System.out.println(getName() + " has no more detections. Moving to DOWN status.");
+                camera.setStatus(STATUS.DOWN); // Move to DOWN status
+                terminate();
+            }
+
         });
 
         // Subscribe to CrashedBroadcast
         subscribeBroadcast(CrashedBroadcast.class, broadcast -> {
             System.out.println(getName() + " received CrashedBroadcast from " + broadcast.getSenderId() + ". Terminating.");
+            camera.setStatus(STATUS.DOWN); // Update camera status to DOWN
             terminate();
         });
 
@@ -85,6 +115,7 @@ public class CameraService extends MicroService {
             // Conditional termination: Only terminate if the sender is "TimeService"
             if ("TimeService".equals(broadcast.getSenderId())) {
                 System.out.println(getName() + " terminating as TimeService has ended.");
+                camera.setStatus(STATUS.DOWN); // Update camera status to DOWN
                 terminate();
             }
         });
