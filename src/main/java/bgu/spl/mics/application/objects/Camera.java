@@ -1,6 +1,6 @@
 package bgu.spl.mics.application.objects;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -14,6 +14,8 @@ public class Camera {
     private STATUS status; // Enum representing the camera's current status (Up, Down, Error)
     private final List<StampedDetectedObjects> detectedObjectsList; // Time-stamped list of detected objects
 
+    private final Object statusLock = new Object();
+
     /**
      * Constructor for Camera.
      *
@@ -25,7 +27,9 @@ public class Camera {
         this.id = id;
         this.frequency = frequency;
         this.status = STATUS.UP; // Default status is UP
-        this.detectedObjectsList = detectedObjectsList != null ? detectedObjectsList : new ArrayList<>();
+        this.detectedObjectsList = detectedObjectsList != null
+                ? Collections.unmodifiableList(detectedObjectsList)
+                : Collections.emptyList(); // Ensure immutability of preloaded data
     }
 
     /**
@@ -52,7 +56,9 @@ public class Camera {
      * @return The current status of the camera.
      */
     public STATUS getStatus() {
-        return status;
+        synchronized (statusLock) {
+            return status;
+        }
     }
 
     /**
@@ -61,7 +67,9 @@ public class Camera {
      * @param status The new status for the camera.
      */
     public void setStatus(STATUS status) {
-        this.status = status;
+        synchronized (statusLock) {
+            this.status = status;
+        }
     }
 
     /**
@@ -77,14 +85,5 @@ public class Camera {
             }
         }
         return null; // Return null if no detections are found at the given time
-    }
-
-    /**
-     * Adds a new stamped detected object to the list.
-     *
-     * @param stampedDetectedObjects The new stamped detected object to add.
-     */
-    public void addDetectedObjects(StampedDetectedObjects stampedDetectedObjects) {
-        detectedObjectsList.add(stampedDetectedObjects);
     }
 }

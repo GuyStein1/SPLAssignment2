@@ -61,7 +61,7 @@ public class CameraService extends MicroService {
                 detections.add(newDetections);
             }
 
-            // Process pending detections to send events
+            // Process pending detections to send events according to frequency
             while (!detections.isEmpty() && detections.peek().getTime() + camera.getFrequency() == currentTick) {
                 StampedDetectedObjects detectionToSend = detections.poll();
                 sendEvent(new DetectObjectsEvent(detectionToSend.getTime(), detectionToSend.getDetectedObjects()));

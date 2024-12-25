@@ -45,14 +45,5 @@ public class StampedDetectedObjects {
     public List<DetectedObject> getDetectedObjects() {
         return Collections.unmodifiableList(new ArrayList<>(detectedObjects)); // Safe for readers
     }
-
-    /**
-     * Get the total number of detected objects.
-     *
-     * @return The count of detected objects in the list.
-     */
-    public int getDetectedObjectCount() {
-        return detectedObjects.size(); // No synchronization needed (read-safe in CopyOnWriteArrayList)
-    }
 }
 
