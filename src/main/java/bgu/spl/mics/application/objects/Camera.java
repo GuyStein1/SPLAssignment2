@@ -8,7 +8,6 @@ import java.util.List;
  * Responsible for detecting objects in the environment.
  */
 public class Camera {
-
     // Fields
     private final int id; // Unique identifier for the camera
     private final int frequency; // Time interval at which the camera sends new events
@@ -66,18 +65,18 @@ public class Camera {
     }
 
     /**
-     * Gets the list of detected objects at a specific time.
+     * Gets the StampedDetectedObjects for a specific time.
      *
      * @param currentTime The current simulation tick.
-     * @return A list of detected objects at the given time.
+     * @return The StampedDetectedObjects for the given time, or null if no detections exist.
      */
-    public List<DetectedObject> getDetectedObjectsAtTime(int currentTime) {
-        for (StampedDetectedObjects stampedObject : detectedObjectsList) {
-            if (stampedObject.getTime() == currentTime) {
-                return stampedObject.getDetectedObjects();
+    public StampedDetectedObjects getStampedDetectedObjectsAtTime(int currentTime) {
+        for (StampedDetectedObjects stampedObjects : detectedObjectsList) {
+            if (stampedObjects.getTime() == currentTime) {
+                return stampedObjects;
             }
         }
-        return new ArrayList<>(); // Return an empty list if no objects are detected at the given time
+        return null; // Return null if no detections are found at the given time
     }
 
     /**

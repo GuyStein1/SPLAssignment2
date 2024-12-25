@@ -12,9 +12,10 @@ import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
 
 // Import relevant objects
 import bgu.spl.mics.application.objects.Camera;
+import bgu.spl.mics.application.objects.StampedDetectedObjects;
 import bgu.spl.mics.application.objects.StatisticalFolder;
 
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -28,6 +29,8 @@ public class CameraService extends MicroService {
 
     // Fields
     private final Camera camera;
+    // Queue to track detections awaiting dispatch according to camera frequency
+    private final Queue<StampedDetectedObjects> detections;
     /**
      * Constructor for CameraService.
      *
@@ -36,6 +39,7 @@ public class CameraService extends MicroService {
     public CameraService(Camera camera) {
         super("Camera_" + camera.getID());
         this.camera = camera;
+        detections = new LinkedList<>();
     }
 
     /**
@@ -49,15 +53,22 @@ public class CameraService extends MicroService {
 
         // Subscribe to TickBroadcast
         subscribeBroadcast(TickBroadcast.class, tick -> {
-            if (tick.getCurrentTick() % camera.getFrequency() == 0) {
-                List<DetectedObject> detectedObjects = camera.getDetectedObjectsAtTime(tick.getCurrentTick());
-                if (!detectedObjects.isEmpty()) {
-                    sendEvent(new DetectObjectsEvent(tick.getCurrentTick(), detectedObjects));
-                    System.out.println(getName() + " sent DetectObjectsEvent with " + detectedObjects.size() + " objects.");
+            int currentTick = tick.getCurrentTick();
 
-                    // Update StatisticalFolder
-                    StatisticalFolder.getInstance().incrementDetectedObjects(detectedObjects.size());
-                }
+            // Check for new detections to queue
+            StampedDetectedObjects newDetections = camera.getStampedDetectedObjectsAtTime(currentTick);
+            if (newDetections != null) {
+                detections.add(newDetections);
+            }
+
+            // Process pending detections to send events
+            while (!detections.isEmpty() && detections.peek().getTime() + camera.getFrequency() == currentTick) {
+                StampedDetectedObjects detectionToSend = detections.poll();
+                sendEvent(new DetectObjectsEvent(detectionToSend.getTime(), detectionToSend.getDetectedObjects()));
+                System.out.println(getName() + " sent DetectObjectsEvent with " + detectionToSend.getDetectedObjects().size() + " objects.");
+
+                // Update StatisticalFolder
+                StatisticalFolder.getInstance().incrementDetectedObjects(detectionToSend.getDetectedObjects().size());
             }
         });
 
