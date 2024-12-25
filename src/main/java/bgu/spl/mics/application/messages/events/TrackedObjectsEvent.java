@@ -10,15 +10,22 @@ import java.util.List;
  */
 public class TrackedObjectsEvent implements Event<Void> {
 
-    // Fields
     private final List<TrackedObject> trackedObjects; // List of tracked objects.
 
-    // Constructor
+    /**
+     * Constructor for TrackedObjectsEvent.
+     *
+     * @param trackedObjects The list of tracked objects.
+     */
     public TrackedObjectsEvent(List<TrackedObject> trackedObjects) {
         this.trackedObjects = trackedObjects;
     }
 
-    // Getter
+    /**
+     * Gets the list of tracked objects.
+     *
+     * @return The tracked objects.
+     */
     public List<TrackedObject> getTrackedObjects() {
         return trackedObjects;
     }

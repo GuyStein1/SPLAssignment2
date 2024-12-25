@@ -11,12 +11,20 @@ public class CrashedBroadcast implements Broadcast {
     // Fields
     private final String senderId; // The ID of the service that crashed.
 
-    // Constructor
+    /**
+     * Constructor for CrashedBroadcast.
+     *
+     * @param senderId The ID of the service that crashed.
+     */
     public CrashedBroadcast(String senderId) {
         this.senderId = senderId;
     }
 
-    // Getter
+    /**
+     * Gets the ID of the service that crashed.
+     *
+     * @return The sender ID.
+     */
     public String getSenderId() {
         return senderId;
     }

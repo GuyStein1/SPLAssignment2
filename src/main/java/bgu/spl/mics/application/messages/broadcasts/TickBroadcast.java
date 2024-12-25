@@ -11,12 +11,20 @@ public class TickBroadcast implements Broadcast {
     // Fields
     private final int currentTick; // The current simulation tick.
 
-    // Constructor
+    /**
+     * Constructor for TickBroadcast.
+     *
+     * @param currentTick The current simulation tick.
+     */
     public TickBroadcast(int currentTick) {
         this.currentTick = currentTick;
     }
 
-    // Getter
+    /**
+     * Gets the current simulation tick.
+     *
+     * @return The current tick.
+     */
     public int getCurrentTick() {
         return currentTick;
     }

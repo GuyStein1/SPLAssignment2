@@ -68,7 +68,7 @@ public class TimeService extends MicroService {
                 sendBroadcast(new TerminatedBroadcast(getName()));
                 System.out.println("TimeService broadcasted TerminatedBroadcast.");
             } catch (InterruptedException e) {
-                System.out.println("TimeService interrupted. Exiting...");
+                System.out.println("TimeService interrupted. Terminating...");
                 Thread.currentThread().interrupt(); // Restore interrupt status
             } finally {
                 terminate(); // Signal the service to terminate

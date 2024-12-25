@@ -8,15 +8,22 @@ import bgu.spl.mics.application.objects.Pose;
  */
 public class PoseEvent implements Event<Void> {
 
-    // Fields
-    private final Pose pose;
+    private final Pose pose; // The robot's pose.
 
-    // Constructor
+    /**
+     * Constructor for PoseEvent.
+     *
+     * @param pose The robot's pose.
+     */
     public PoseEvent(Pose pose) {
         this.pose = pose;
     }
 
-    // Getters
+    /**
+     * Gets the robot's pose.
+     *
+     * @return The pose.
+     */
     public Pose getPose() {
         return pose;
     }

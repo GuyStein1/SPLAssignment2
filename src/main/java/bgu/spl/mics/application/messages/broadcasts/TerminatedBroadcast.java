@@ -11,12 +11,20 @@ public class TerminatedBroadcast implements Broadcast {
     // Fields
     private final String senderId; // The ID of the service that is terminating.
 
-    // Constructor
+    /**
+     * Constructor for TerminatedBroadcast.
+     *
+     * @param senderId The ID of the service that is terminating.
+     */
     public TerminatedBroadcast(String senderId) {
         this.senderId = senderId;
     }
 
-    // Getter
+    /**
+     * Gets the ID of the service that is terminating.
+     *
+     * @return The sender ID.
+     */
     public String getSenderId() {
         return senderId;
     }
