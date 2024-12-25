@@ -1,11 +1,18 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+
+// Import relevant broadcasts
 import bgu.spl.mics.application.messages.broadcasts.CrashedBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 
+// Import relevant events
 import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
+
+// Import relevant objects
+import bgu.spl.mics.application.objects.Camera;
+import bgu.spl.mics.application.objects.StatisticalFolder;
 
 import java.util.List;
 
@@ -47,20 +54,28 @@ public class CameraService extends MicroService {
                 if (!detectedObjects.isEmpty()) {
                     sendEvent(new DetectObjectsEvent(tick.getCurrentTick(), detectedObjects));
                     System.out.println(getName() + " sent DetectObjectsEvent with " + detectedObjects.size() + " objects.");
+
+                    // Update StatisticalFolder
+                    StatisticalFolder.getInstance().incrementDetectedObjects(detectedObjects.size());
                 }
             }
         });
 
         // Subscribe to CrashedBroadcast
         subscribeBroadcast(CrashedBroadcast.class, broadcast -> {
-            System.out.println(getName() + " received CrashedBroadcast. Terminating.");
+            System.out.println(getName() + " received CrashedBroadcast from " + broadcast.getSenderId() + ". Terminating.");
             terminate();
         });
 
         // Subscribe to TerminatedBroadcast
         subscribeBroadcast(TerminatedBroadcast.class, broadcast -> {
-            System.out.println(getName() + " received TerminatedBroadcast. Terminating.");
-            terminate();
+            System.out.println(getName() + " received TerminatedBroadcast from " + broadcast.getSenderId() + ".");
+
+            // Conditional termination: Only terminate if the sender is "TimeService"
+            if ("TimeService".equals(broadcast.getSenderId())) {
+                System.out.println(getName() + " terminating as TimeService has ended.");
+                terminate();
+            }
         });
     }
 }
