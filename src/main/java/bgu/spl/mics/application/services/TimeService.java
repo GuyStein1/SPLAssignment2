@@ -12,7 +12,7 @@ import bgu.spl.mics.MicroService;
 public class TimeService extends MicroService {
 
     // Fields
-    private final int tickTime; // Time for each tick in milliseconds
+    private final int tickTime; // Time for each tick in seconds
     private final int duration; // Total number of ticks
 
     /**
@@ -34,31 +34,26 @@ public class TimeService extends MicroService {
     @Override
     protected void initialize() {
         System.out.println("TimeService initialized.");
-        // Run the ticking logic in a separate thread
-        Thread tickThread = new Thread(() -> {
-            try {
-                for (int currentTick = 1; currentTick <= duration; currentTick++) {
-                    // Broadcast the current tick
-                    sendBroadcast(new TickBroadcast(currentTick));
-                    System.out.println("TimeService broadcasted Tick: " + currentTick);
+        try {
+            for (int currentTick = 1; currentTick <= duration; currentTick++) {
+                // Broadcast the current tick
+                sendBroadcast(new TickBroadcast(currentTick));
+                System.out.println("TimeService broadcasted Tick: " + currentTick);
 
-                    // Update system runtime in StatisticalFolder
-                    StatisticalFolder.getInstance().incrementSystemRuntime();
+                // Update system runtime in StatisticalFolder
+                StatisticalFolder.getInstance().incrementSystemRuntime();
 
-                    // Wait for the next tick
-                    Thread.sleep(tickTime);
-                }
-                // After all ticks are complete, broadcast TerminatedBroadcast
-                sendBroadcast(new TerminatedBroadcast(getName()));
-                System.out.println("TimeService broadcasted TerminatedBroadcast.");
-            } catch (InterruptedException e) {
-                System.out.println("TimeService interrupted. Terminating...");
-                Thread.currentThread().interrupt(); // Restore interrupt status
-            } finally {
-                terminate(); // Signal the service to terminate
+                // Wait for the next tick
+                Thread.sleep(tickTime * 1000L);
             }
-        });
-
-        tickThread.start(); // Start the thread
+            // After all ticks are complete, broadcast TerminatedBroadcast
+            sendBroadcast(new TerminatedBroadcast(getName()));
+            System.out.println("TimeService broadcasted TerminatedBroadcast.");
+        } catch (InterruptedException e) {
+            System.out.println("TimeService interrupted. Terminating...");
+            Thread.currentThread().interrupt(); // Restore interrupt status
+        } finally {
+            terminate(); // Signal the service to terminate
+        }
     }
 }

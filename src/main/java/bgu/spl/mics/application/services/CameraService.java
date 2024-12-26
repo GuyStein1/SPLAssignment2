@@ -50,11 +50,8 @@ public class CameraService extends MicroService {
      */
     @Override
     protected void initialize() {
-        System.out.println(getName() + " initialized.");
-
         // Subscribe to TickBroadcast
         subscribeBroadcast(TickBroadcast.class, tick -> {
-
             // Check camera status before processing
             if (camera.getStatus() != STATUS.UP) {
                 System.out.println(getName() + " is not operational. Skipping tick processing.");
@@ -80,13 +77,16 @@ public class CameraService extends MicroService {
 
                 // Add valid detections to the queue
                 detections.add(newDetections);
+                System.out.println(getName() + " queued " + newDetections.getDetectedObjects().size() +
+                        " objects at tick " + currentTick);
             }
 
             // Process pending detections to send events according to frequency
             while (!detections.isEmpty() && detections.peek().getTime() + camera.getFrequency() == currentTick) {
                 StampedDetectedObjects detectionToSend = detections.poll();
                 sendEvent(new DetectObjectsEvent(detectionToSend.getTime(), detectionToSend.getDetectedObjects()));
-                System.out.println(getName() + " sent DetectObjectsEvent with " + detectionToSend.getDetectedObjects().size() + " objects.");
+                System.out.println(getName() + " sent DetectObjectsEvent with " + detectionToSend.getDetectedObjects().size() +
+                        " objects at tick " + currentTick);
 
                 // Update StatisticalFolder
                 StatisticalFolder.getInstance().incrementDetectedObjects(detectionToSend.getDetectedObjects().size());
@@ -119,5 +119,7 @@ public class CameraService extends MicroService {
                 terminate();
             }
         });
+
+        System.out.println(getName() + " initialized.");
     }
 }

@@ -73,4 +73,12 @@ public class StatisticalFolder {
     public int getNumLandmarks() {
         return numLandmarks.get();
     }
+
+    // Add a reset method for testing purposes
+    public void reset() {
+        systemRuntime.set(0);
+        numDetectedObjects.set(0);
+        numTrackedObjects.set(0);
+        numLandmarks.set(0);
+    }
 }

@@ -1,85 +1,183 @@
 package bgu.spl.mics;
 
-import bgu.spl.mics.*;
-import bgu.spl.mics.application.messages.broadcasts.CrashedBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
-import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
 import bgu.spl.mics.application.objects.*;
-
 import bgu.spl.mics.application.services.CameraService;
+import bgu.spl.mics.application.services.TimeService;
+import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CameraServiceTest {
-
-    private CameraService cameraService;
-    private Camera camera;
+public class CameraServiceTest {
 
     @BeforeEach
-    void setup() {
-        // Prepare test data
-        DetectedObject obj1 = new DetectedObject("Wall_1", "Wall");
-        DetectedObject errorObj = new DetectedObject("ERROR", "Simulated error");
-        StampedDetectedObjects detection1 = new StampedDetectedObjects(1, Arrays.asList(obj1));
-        StampedDetectedObjects detectionError = new StampedDetectedObjects(2, Arrays.asList(errorObj));
-        camera = new Camera(1, 1, Arrays.asList(detection1, detectionError));
-        cameraService = new CameraService(camera);
+    public void resetStatisticalFolder() {
+        StatisticalFolder.getInstance().reset();
     }
 
     @Test
-    void testErrorDetection() throws InterruptedException {
-        MessageBusImpl messageBus = MessageBusImpl.getInstance();
-        messageBus.register(cameraService);
+    public void testCameraServiceProcessingTickBroadcasts() throws InterruptedException {
+        // Setup: Camera with detected objects
+        StampedDetectedObjects detection1 = new StampedDetectedObjects(1, Arrays.asList(
+                new DetectedObject("Wall_1", "Wall"),
+                new DetectedObject("Door_1", "Door")
+        ));
+        StampedDetectedObjects detection2 = new StampedDetectedObjects(2, Arrays.asList(
+                new DetectedObject("Wall_2", "Wall")
+        ));
 
-        // Run CameraService in its own thread
-        Thread serviceThread = new Thread(cameraService::run);
-        serviceThread.start();
+        Camera camera = new Camera(1, 2, Arrays.asList(detection1, detection2)); // Frequency = 2
+        CameraService cameraService = new CameraService(camera);
 
-        // Simulate TickBroadcast for the error tick
-        messageBus.sendBroadcast(new TickBroadcast(2));
+        // Start CameraService in its own thread
+        Thread cameraThread = new Thread(cameraService);
+        cameraThread.start();
 
-        // Wait for the CameraService to process the tick
-        Thread.sleep(100);
+        Thread.sleep(50);
 
-        // Verify that a CrashedBroadcast was sent
-        boolean crashedBroadcastSent = false;
-        while (messageBus.awaitMessage(cameraService) instanceof CrashedBroadcast) {
-            crashedBroadcastSent = true;
-        }
+        // Simulate TimeService broadcasting TickBroadcast
+        TimeService timeService = new TimeService(1, 5); // Tick time = 1s, duration = 5 ticks
+        Thread timeThread = new Thread(timeService);
+        timeThread.start();
 
-        assertTrue(crashedBroadcastSent);
+        // Wait for TimeService to complete
+        timeThread.join();
 
-        serviceThread.join();
+        // Assert: CameraService processed detections
+        assertEquals(3, StatisticalFolder.getInstance().getNumDetectedObjects(),
+                "CameraService should process and detect objects correctly.");
+
+        // Ensure threads are terminated
+        assertFalse(cameraThread.isAlive(), "CameraService thread should terminate.");
+        assertFalse(timeThread.isAlive(), "TimeService thread should terminate.");
+
+        // Cleanup
+        if (cameraThread.isAlive()) cameraThread.interrupt();
+        if (timeThread.isAlive()) timeThread.interrupt();
     }
 
     @Test
-    void testDetectObjectsEvent() throws InterruptedException {
-        MessageBusImpl messageBus = MessageBusImpl.getInstance();
-        messageBus.register(cameraService);
+    public void testMultipleCameraServicesProcessingTicks() throws InterruptedException {
+        // Setup: Multiple Cameras with detected objects
+        StampedDetectedObjects camera1Detection1 = new StampedDetectedObjects(1, Arrays.asList(
+                new DetectedObject("Wall_1", "Wall"),
+                new DetectedObject("Door_1", "Door")
+        ));
+        StampedDetectedObjects camera1Detection2 = new StampedDetectedObjects(3, Arrays.asList(
+                new DetectedObject("Wall_2", "Wall")
+        ));
+        Camera camera1 = new Camera(1, 2, Arrays.asList(camera1Detection1, camera1Detection2)); // Frequency = 2
 
-        // Run CameraService in its own thread
-        Thread serviceThread = new Thread(cameraService::run);
-        serviceThread.start();
+        StampedDetectedObjects camera2Detection1 = new StampedDetectedObjects(1, Arrays.asList(
+                new DetectedObject("Chair_1", "Chair"),
+                new DetectedObject("Table_1", "Table")
+        ));
+        StampedDetectedObjects camera2Detection2 = new StampedDetectedObjects(4, Arrays.asList(
+                new DetectedObject("Chair_2", "Chair")
+        ));
+        Camera camera2 = new Camera(2, 3, Arrays.asList(camera2Detection1, camera2Detection2)); // Frequency = 3
 
-        // Simulate TickBroadcast for the detection tick
-        messageBus.sendBroadcast(new TickBroadcast(1));
+        // Initialize CameraServices
+        CameraService cameraService1 = new CameraService(camera1);
+        CameraService cameraService2 = new CameraService(camera2);
 
-        // Wait for the CameraService to process the tick
+        // Start CameraServices in their own threads
+        Thread cameraThread1 = new Thread(cameraService1);
+        Thread cameraThread2 = new Thread(cameraService2);
+        cameraThread1.start();
+        cameraThread2.start();
+
+        // Wait briefly to ensure CameraServices have started
         Thread.sleep(100);
 
-        // Verify that a DetectObjectsEvent was sent
-        boolean detectEventSent = false;
-        while (messageBus.awaitMessage(cameraService) instanceof DetectObjectsEvent) {
-            detectEventSent = true;
-        }
+        // Simulate TimeService broadcasting TickBroadcasts
+        TimeService timeService = new TimeService(1, 10); // Tick time = 1 second, duration = 10 ticks
+        Thread timeThread = new Thread(timeService);
+        timeThread.start();
 
-        assertTrue(detectEventSent);
+        // Wait for TimeService to complete
+        timeThread.join();
 
-        serviceThread.join();
+        // Assert: CameraServices processed detections correctly
+        int expectedDetectedObjects = 6; // 3 objects from camera 1 + 3 objects from camera 2
+        assertEquals(expectedDetectedObjects, StatisticalFolder.getInstance().getNumDetectedObjects(),
+                "All CameraServices should process and detect objects correctly.");
+
+        // Ensure threads are terminated
+        assertFalse(cameraThread1.isAlive(), "CameraService 1 thread should terminate.");
+        assertFalse(cameraThread2.isAlive(), "CameraService 2 thread should terminate.");
+        assertFalse(timeThread.isAlive(), "TimeService thread should terminate.");
+
+        // Cleanup
+        if (cameraThread1.isAlive()) cameraThread1.interrupt();
+        if (cameraThread2.isAlive()) cameraThread2.interrupt();
+        if (timeThread.isAlive()) timeThread.interrupt();
     }
+
+    @Test
+    public void testOneCameraWithMultipleCameraServicesAnd10Ticks() throws InterruptedException {
+        // Setup: Single Camera with detected objects at various ticks
+        StampedDetectedObjects detection1 = new StampedDetectedObjects(1, Arrays.asList(
+                new DetectedObject("Wall_1", "Wall"),
+                new DetectedObject("Door_1", "Door")
+        ));
+        StampedDetectedObjects detection2 = new StampedDetectedObjects(3, Arrays.asList(
+                new DetectedObject("Chair_1", "Chair")
+        ));
+        StampedDetectedObjects detection3 = new StampedDetectedObjects(7, Arrays.asList(
+                new DetectedObject("Table_1", "Table"),
+                new DetectedObject("Lamp_1", "Lamp")
+        ));
+        Camera camera = new Camera(1, 2, Arrays.asList(detection1, detection2, detection3)); // Frequency = 2
+
+        // Initialize multiple CameraServices for the same camera
+        CameraService cameraService1 = new CameraService(camera);
+        CameraService cameraService2 = new CameraService(camera);
+        CameraService cameraService3 = new CameraService(camera);
+
+        // Start CameraServices in separate threads
+        Thread cameraThread1 = new Thread(cameraService1);
+        Thread cameraThread2 = new Thread(cameraService2);
+        Thread cameraThread3 = new Thread(cameraService3);
+        cameraThread1.start();
+        cameraThread2.start();
+        cameraThread3.start();
+
+        // Wait briefly to ensure CameraServices have started
+        Thread.sleep(100);
+
+        // Simulate TimeService broadcasting TickBroadcasts for 10 ticks
+        TimeService timeService = new TimeService(1, 10); // Tick time = 1 second, duration = 10 ticks
+        Thread timeThread = new Thread(timeService);
+        timeThread.start();
+
+        // Wait for TimeService to complete
+        timeThread.join();
+
+        // Assert: All CameraServices processed detections correctly
+        int expectedDetectedObjects = 5; // Total number of objects detected by the camera
+        assertEquals(expectedDetectedObjects, StatisticalFolder.getInstance().getNumDetectedObjects(),
+                "All CameraServices should process and detect objects correctly.");
+
+        // Ensure threads are terminated
+        assertFalse(cameraThread1.isAlive(), "CameraService 1 thread should terminate.");
+        assertFalse(cameraThread2.isAlive(), "CameraService 2 thread should terminate.");
+        assertFalse(cameraThread3.isAlive(), "CameraService 3 thread should terminate.");
+        assertFalse(timeThread.isAlive(), "TimeService thread should terminate.");
+
+        // Cleanup
+        if (cameraThread1.isAlive()) cameraThread1.interrupt();
+        if (cameraThread2.isAlive()) cameraThread2.interrupt();
+        if (cameraThread3.isAlive()) cameraThread3.interrupt();
+        if (timeThread.isAlive()) timeThread.interrupt();
+    }
+
 }
