@@ -79,8 +79,11 @@ public class MessageBusImpl implements MessageBus {
 		// Add the broadcast message to each subscriber's queue
 		for (MicroService subscriber : subscribers) {
 			BlockingQueue<Message> queue = microServiceQueues.get(subscriber);
-			if (queue != null) {
-				queue.add(b);
+			//?????????
+			synchronized (queue) {
+				if (queue != null) {
+					queue.add(b);
+				}
 			}
 		}
 	}
@@ -94,6 +97,11 @@ public class MessageBusImpl implements MessageBus {
 		// Synchronize to ensure thread-safe round-robin delivery
 		synchronized (subscribers) {
 			chosenMs = subscribers.poll(); // Get the next subscriber in the queue.
+			//???????????????
+			// Make sure microservice wasn't unregistered, but not yet removed from subscriber queue (in case of context switch)
+			while (microServiceQueues.get(chosenMs) == null) {
+				chosenMs = subscribers.poll();
+			}
 			if (chosenMs != null) {
 				subscribers.add(chosenMs); // Re-add the subscriber to the end of the queue for round-robin.
 			}
@@ -123,7 +131,7 @@ public class MessageBusImpl implements MessageBus {
 		// Remove from all event subscription lists
 		for (Queue<MicroService> subscribers : eventSubscribers.values()) {
 			synchronized (subscribers) { // Lock only the specific queue
-				subscribers.remove(m);// Synchronize on shared object explicitly
+				subscribers.remove(m); // Synchronize on shared object explicitly
 			}
 		}
 		for (List<MicroService> list : broadcastSubscribers.values()) {
