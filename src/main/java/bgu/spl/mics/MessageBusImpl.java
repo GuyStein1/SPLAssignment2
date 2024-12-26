@@ -25,7 +25,7 @@ public class MessageBusImpl implements MessageBus {
 
 	// Singleton instance of MessageBus
 	private static class SingletonHolder {
-		private static final MessageBusImpl instance = new MessageBusImpl();
+		private static final MessageBusImpl INSTANCE = new MessageBusImpl();
 	}
 
 	// Private constructor to enforce singleton
@@ -39,7 +39,7 @@ public class MessageBusImpl implements MessageBus {
 
 	// Public method to get the singleton instance
 	public static MessageBusImpl getInstance() {
-		return SingletonHolder.instance;
+		return SingletonHolder.INSTANCE;
 	}
 
 	@Override

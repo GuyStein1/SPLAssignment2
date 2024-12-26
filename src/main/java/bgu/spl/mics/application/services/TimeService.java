@@ -2,6 +2,7 @@ package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
+import bgu.spl.mics.application.objects.StatisticalFolder;
 import bgu.spl.mics.MicroService;
 
 /**
