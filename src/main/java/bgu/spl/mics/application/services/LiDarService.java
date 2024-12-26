@@ -2,6 +2,8 @@ package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
 
+import bgu.spl.mics.application.objects.LiDarWorkerTracker;
+
 /**
  * LiDarService is responsible for processing data from the LiDAR sensor and
  * sending TrackedObjectsEvents to the FusionSLAM service.

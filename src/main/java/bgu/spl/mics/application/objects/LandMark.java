@@ -10,4 +10,5 @@ public class LandMark {
     private String id; // Unique identifier for the landmark
     private String description; // Description of the landmark
     private List<CloudPoint> coordinates; // List of coordinates in the global frame
+
 }
