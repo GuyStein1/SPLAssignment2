@@ -1,4 +1,5 @@
 package bgu.spl.mics.application.objects;
+import java.util.ArrayList;
 import java.util.List;
 /**
  * Represents a group of cloud points corresponding to a specific timestamp.
@@ -56,10 +57,23 @@ public class StampedCloudPoints {
     /**
      * Gets the list of cloud points.
      *
-     * @return The list of 3D cloud points.
+     * @return The list of cloud points.
      */
     public List<List<Double>> getCloudPoints() {
         return cloudPoints;
+    }
+
+    /**
+     * Converts the raw cloud points to a list of CloudPoint objects.
+     *
+     * @return A list of CloudPoint objects.
+     */
+    public List<CloudPoint> getCoordinates() {
+        List<CloudPoint> coordinates = new ArrayList<>();
+        for (List<Double> point : cloudPoints) {
+                coordinates.add(new CloudPoint(point.get(0), point.get(1)));
+        }
+        return coordinates;
     }
 
     /**

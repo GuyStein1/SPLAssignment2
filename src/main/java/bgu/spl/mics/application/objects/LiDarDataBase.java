@@ -16,7 +16,7 @@ import java.util.List;
 public class LiDarDataBase {
 
     // Fields
-    private  List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
+    private List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
     //Path to the LiDAR data JSON file.
     private final String filePath;
 
@@ -24,6 +24,7 @@ public class LiDarDataBase {
     // Private constructor to prevent external instantiation
     private LiDarDataBase(String filePath) {
         this.filePath = filePath;
+        cloudPoints = loadData(filePath);
     }
 
     // Static inner "Holder" class for singleton instantiation
@@ -48,6 +49,15 @@ public class LiDarDataBase {
      */
     public static LiDarDataBase getInstance(String filePath) {
         return LDBHolder.createInstance(filePath); // Ensures initialization
+    }
+    /**
+     * Returns the singleton instance of LiDarDataBase.
+     *
+     * @return The singleton instance of LiDarDataBase.
+     */
+    public static LiDarDataBase getInstance() {
+        // Called after file path was given in the first get in the main program
+        return LDBHolder.instance; // Ensures initialization
     }
 
     /**

@@ -29,8 +29,8 @@ public class LiDarService extends MicroService {
      * @param LiDarWorkerTracker A LiDAR Tracker worker object that this service will use to process data.
      */
     public LiDarService(LiDarWorkerTracker LiDarWorkerTracker) {
-        super("LiDar_" + lidarWorker.getId());
-        this.lidarWorker = lidarWorker;
+        super("LiDar_" + LiDarWorkerTracker.getId());
+        this.lidarWorker = LiDarWorkerTracker;
         this.eventQueue = new LinkedList<>();
     }
 
@@ -77,7 +77,7 @@ public class LiDarService extends MicroService {
                 List<TrackedObject> trackedObjects = new ArrayList<>();
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object
-                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(null).getCloudPoints(detectedObject.getId());
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId());
                     // Handle case of error
                     if (StampedCloudPoints.getId().equals("ERROR")) {
                         System.out.println(getName() + " detected an error on tick " + currentTick + ". Sending CrashedBroadcast.");
