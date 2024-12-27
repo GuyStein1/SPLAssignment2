@@ -85,15 +85,4 @@ public class LiDarWorkerTracker {
             return new ArrayList<>(lastTrackedObjects);
         }
     }
-
-    /**
-     * Resets the worker to an "UP" status and clears tracked objects.
-     */
-    public void resetWorker() {
-        setStatus(STATUS.UP);
-        synchronized (lastTrackedObjects) {
-            lastTrackedObjects.clear();
-        }
-    }
-
 }

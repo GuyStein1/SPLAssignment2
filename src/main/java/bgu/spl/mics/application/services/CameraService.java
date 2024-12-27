@@ -54,7 +54,6 @@ public class CameraService extends MicroService {
         subscribeBroadcast(TickBroadcast.class, tick -> {
             // Check camera status before processing
             if (camera.getStatus() != STATUS.UP) {
-                System.out.println(getName() + " is not operational. Skipping tick processing.");
                 return;
             }
 

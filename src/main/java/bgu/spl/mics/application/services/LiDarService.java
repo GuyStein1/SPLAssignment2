@@ -61,7 +61,6 @@ public class LiDarService extends MicroService {
 
             // Check LiDar status before processing
             if (lidarWorker.getStatus() != STATUS.UP) {
-                System.out.println(getName() + " is not operational. Skipping tick processing.");
                 return;
             }
 
@@ -78,7 +77,7 @@ public class LiDarService extends MicroService {
                 List<TrackedObject> trackedObjects = new ArrayList<>();
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object
-                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getCloudPoints(detectedObject.getId());
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(null).getCloudPoints(detectedObject.getId());
                     // Handle case of error
                     if (StampedCloudPoints.getId().equals("ERROR")) {
                         System.out.println(getName() + " detected an error on tick " + currentTick + ". Sending CrashedBroadcast.");
@@ -96,6 +95,9 @@ public class LiDarService extends MicroService {
                     );
                     trackedObjects.add(trackedObject);
                 }
+
+                // Update last tracked objects
+                lidarWorker.updateLastTrackedObjects(trackedObjects);
 
                 // Create and send TrackedObjectsEvent to FusionSLAM
                 sendEvent(new TrackedObjectsEvent(trackedObjects));
