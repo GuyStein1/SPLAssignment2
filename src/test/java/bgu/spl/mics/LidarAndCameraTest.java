@@ -8,6 +8,7 @@ import bgu.spl.mics.application.messages.events.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -180,14 +181,77 @@ public class LidarAndCameraTest {
         assertFalse(lidarThread2.isAlive(), "LiDAR Service 2 thread should terminate.");
         assertFalse(lidarThread3.isAlive(), "LiDAR Service 3 thread should terminate.");
         assertFalse(timeThread.isAlive(), "TimeService thread should terminate.");
+    }
 
-        // Cleanup
-        if (cameraThread1.isAlive()) cameraThread1.interrupt();
-        if (cameraThread2.isAlive()) cameraThread2.interrupt();
-        if (cameraThread3.isAlive()) cameraThread3.interrupt();
-        if (lidarThread1.isAlive()) lidarThread1.interrupt();
-        if (lidarThread2.isAlive()) lidarThread2.interrupt();
-        if (lidarThread3.isAlive()) lidarThread3.interrupt();
-        if (timeThread.isAlive()) timeThread.interrupt();
+    @Test
+    public void testSimulationWithHighConcurrency() throws InterruptedException {
+        int numCameras = 10;
+        int numLidars = 10;
+
+        // Calculate the maximum camera and LiDAR frequencies
+        int maxCameraFrequency = numCameras; // Cameras have frequencies 1 to numCameras
+        int maxLidarFrequency = numLidars + 1; // LiDARs have frequencies 2 to numLidars + 1
+        int safetyMargin = 5; // Extra ticks to ensure sufficient processing time
+        int duration = maxCameraFrequency + maxLidarFrequency + safetyMargin;
+
+        List<Thread> cameraThreads = new ArrayList<>();
+        List<String> ids = Arrays.asList(
+                "Wall_1", "Wall_3", "Chair_Base_1", "Wall_4",
+                "Circular_Base_1", "Door", "Wall_5"
+        );
+
+        // Create cameras with detections
+        for (int i = 1; i <= numCameras; i++) {
+            List<StampedDetectedObjects> detections = new ArrayList<>();
+            for (int j = 2; j <= duration - (maxLidarFrequency + i); j += i) { // Ensure last detection is analyzable
+                String id = ids.get((j / 2 - 1) % ids.size());
+                detections.add(new StampedDetectedObjects(j, Arrays.asList(
+                        new DetectedObject(id, "Type_" + i)
+                )));
+            }
+            Camera camera = new Camera(i, i, detections);
+            CameraService cameraService = new CameraService(camera);
+            cameraThreads.add(new Thread(cameraService));
+        }
+
+        List<Thread> lidarThreads = new ArrayList<>();
+        for (int i = 1; i <= numLidars; i++) {
+            LiDarWorkerTracker lidarWorker = new LiDarWorkerTracker(i, i + 1);
+            LiDarService lidarService = new LiDarService(lidarWorker);
+            lidarThreads.add(new Thread(lidarService));
+        }
+
+        // TimeService with calculated duration
+        Thread timeThread = new Thread(new TimeService(1, duration));
+
+        // Start all threads
+        cameraThreads.forEach(Thread::start);
+        lidarThreads.forEach(Thread::start);
+        Thread.sleep(100); // Ensure threads are initialized
+        timeThread.start();
+
+        timeThread.join();
+        for (Thread thread : cameraThreads) thread.join();
+        for (Thread thread : lidarThreads) thread.join();
+
+        // Calculate expected number of detected objects
+        int expectedObjects = 0;
+        for (int i = 1; i <= numCameras; i++) {
+            for (int j = 2; j <= duration - (maxLidarFrequency + i); j += i) {
+                expectedObjects++; // Count each valid detection
+            }
+        }
+
+        // Assert the results
+        assertEquals(expectedObjects, StatisticalFolder.getInstance().getNumDetectedObjects(),
+                "The number of detected objects should match.");
+        assertTrue(StatisticalFolder.getInstance().getNumTrackedObjects() > 0,
+                "LiDAR services should track objects correctly.");
+
+        // Ensure threads terminate properly
+        cameraThreads.forEach(thread -> assertFalse(thread.isAlive(), "CameraService thread should terminate."));
+        lidarThreads.forEach(thread -> assertFalse(thread.isAlive(), "LiDARService thread should terminate."));
+        assertFalse(timeThread.isAlive(), "TimeService thread should terminate.");
     }
 }
+

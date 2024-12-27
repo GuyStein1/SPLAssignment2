@@ -79,9 +79,8 @@ public class MessageBusImpl implements MessageBus {
 		// Add the broadcast message to each subscriber's queue
 		for (MicroService subscriber : subscribers) {
 			BlockingQueue<Message> queue = microServiceQueues.get(subscriber);
-			//?????????
-			synchronized (queue) {
-				if (queue != null) {
+			if (queue != null) {
+				synchronized (queue) {
 					queue.add(b);
 				}
 			}
