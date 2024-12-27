@@ -16,36 +16,38 @@ import java.util.List;
 public class LiDarDataBase {
 
     // Fields
-    private List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
+    private  List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
+    //Path to the LiDAR data JSON file.
+    private final String filePath;
 
-    /**
-     * Private constructor for the singleton.
-     *
-     * @param filePath Path to the LiDAR data JSON file.
-     */
+
+    // Private constructor to prevent external instantiation
     private LiDarDataBase(String filePath) {
-        this.cloudPoints = loadData(filePath);
+        this.filePath = filePath;
+    }
+
+    // Static inner "Holder" class for singleton instantiation
+    private static class LDBHolder {
+        private static LiDarDataBase instance = null;
+
+        // Handles actual singleton creation logic
+        private static LiDarDataBase createInstance(String filePath) {
+            if (instance == null) {
+                instance = new LiDarDataBase(filePath); // Create and initialize the singleton
+            }
+            return instance; // Return the instance (only initialized once)
+        }
     }
 
     /**
-     * Inner static helper class to hold the singleton instance.
-     */
-    private static class SingletonHelper {
-        private static LiDarDataBase INSTANCE = new LiDarDataBase();
-    }
-
-    /**
-     * Returns the singleton instance of LiDarDataBase.
+     * Returns the singleton instance of LiDarDataBase. Initializes it using the file path if
+     * this is the first call.
      *
      * @param filePath The path to the LiDAR data file.
      * @return The singleton instance of LiDarDataBase.
      */
     public static LiDarDataBase getInstance(String filePath) {
-        // Set the file path before accessing the instance
-        if (SingletonHelper.INSTANCE == null) {
-            SingletonHelper.INSTANCE = new LiDarDataBase(filePath);
-        }
-        return SingletonHelper.INSTANCE;
+        return LDBHolder.createInstance(filePath); // Ensures initialization
     }
 
     /**
