@@ -1,4 +1,6 @@
 package bgu.spl.mics.application.objects;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -8,10 +10,90 @@ import java.util.List;
  */
 public class LiDarWorkerTracker {
     // Fields
-    private int id; // Unique identifier for the LiDAR worker
-    private int frequency; // Time interval at which the LiDAR worker sends new events
-    private STATUS status; // Enum representing the LiDAR's current status (Up, Down, Error)
-    private List<TrackedObject> lastTrackedObjects; // List of last objects tracked by the LiDAR
+    private final int id; // Unique identifier for the LiDAR worker
+    private final int frequency; // Time interval at which the LiDAR worker sends new events
+    private volatile STATUS status; // Enum representing the LiDAR's current status (Up, Down, Error)
+    private final List<TrackedObject> lastTrackedObjects; // List of last objects tracked by the LiDAR
 
-    // TODO: Define fields and methods.
+    // Constructor
+    public LiDarWorkerTracker(int id, int frequency) {
+        if (frequency <= 0) {
+            throw new IllegalArgumentException("Frequency must be positive.");
+        }
+        this.id = id;
+        this.frequency = frequency;
+        this.status = STATUS.UP; // Initial status is set to UP
+        this.lastTrackedObjects = Collections.synchronizedList(new ArrayList<>()); // Thread-safe list
+    }
+
+    /**
+     * Retrieves the unique ID of the LiDAR worker tracker.
+     *
+     * @return The ID of the worker.
+     */
+    public int getId() {
+        return id;
+    }
+
+    /**
+     * Retrieves the frequency of the LiDAR worker tracker.
+     *
+     * @return The frequency.
+     */
+    public int getFrequency() {
+        return frequency;
+    }
+
+    /**
+     * Retrieves the current status of the worker.
+     *
+     * @return The status (UP, DOWN, or ERROR).
+     */
+    public STATUS getStatus() {
+        return status;
+    }
+
+    /**
+     * Sets the status of the worker.
+     *
+     * @param status The new status.
+     */
+    public void setStatus(STATUS status) {
+        this.status = status;
+    }
+
+    /**
+     * Updates the list of last tracked objects (thread-safe).
+     *
+     * @param trackedObjects The list of tracked objects.
+     */
+    public void updateLastTrackedObjects(List<TrackedObject> trackedObjects) {
+        synchronized (lastTrackedObjects) {
+            //why clearing? is it suppose to be the object detected in the last scan or overall the objects found
+            lastTrackedObjects.clear();
+            lastTrackedObjects.addAll(trackedObjects);
+        }
+    }
+
+    /**
+     * Gets the most recent tracked objects (thread-safe).
+     *
+     * @return A copy of the last tracked objects.
+     */
+    public List<TrackedObject> getLastTrackedObjects() {
+        synchronized (lastTrackedObjects) {
+            return new ArrayList<>(lastTrackedObjects);
+        }
+    }
+
+    /**
+     * Resets the worker to an "UP" status and clears tracked objects.
+     */
+    public void resetWorker() {
+        setStatus(STATUS.UP);
+        synchronized (lastTrackedObjects) {
+            lastTrackedObjects.clear();
+        }
+    }
+
 }
