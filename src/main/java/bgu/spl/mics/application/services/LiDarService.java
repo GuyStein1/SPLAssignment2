@@ -8,10 +8,7 @@ import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
 import bgu.spl.mics.application.messages.events.TrackedObjectsEvent;
 import bgu.spl.mics.application.objects.*;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * LiDarService is responsible for processing data from the LiDAR sensor and
@@ -46,15 +43,28 @@ public class LiDarService extends MicroService {
     protected void initialize() {
         // Subscribe to DetectObjectsEvent
         subscribeEvent(DetectObjectsEvent.class, event -> {
-            System.out.println(getName() + " received DetectObjectsEvent for objects detected at time " + event.getTime());
+
+            if (lidarWorker.getStatus() != STATUS.UP) {
+                System.out.println(getName() + " is not operational. Ignoring DetectObjectsEvent.");
+                return;
+            }
+
+            System.out.println(getName() + " received DetectObjectsEvent at time " + event.getTime());
 
             // Enqueue the event for delayed processing
             eventQueue.add(event);
-            System.out.println(getName() + " queued DetectObjectsEvent for future processing.");
+            System.out.println(getName() + " queued DetectObjectsEvent at tick " + event.getTime() + " for future processing.");
         });
 
         // Subscribe to TickBroadcast
         subscribeBroadcast(TickBroadcast.class, tick -> {
+
+            // Check LiDar status before processing
+            if (lidarWorker.getStatus() != STATUS.UP) {
+                System.out.println(getName() + " is not operational. Skipping tick processing.");
+                return;
+            }
+
             int currentTick = tick.getCurrentTick(); // Get the current tick
             int frequency = lidarWorker.getFrequency(); // Get the frequency
 
@@ -62,20 +72,27 @@ public class LiDarService extends MicroService {
 
             // Process events in the queue if their time aligns with the frequency
             while (!eventQueue.isEmpty() && eventQueue.peek().getTime() + frequency == currentTick) {
+
                 DetectObjectsEvent eventToProcess = eventQueue.poll();
 
                 List<TrackedObject> trackedObjects = new ArrayList<>();
-
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object
-                    StampedCloudPoints cloudPoints = LiDarDataBase.getCloudPoints(detectedObject.getId());
-
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getCloudPoints(detectedObject.getId());
+                    // Handle case of error
+                    if (StampedCloudPoints.getId().equals("ERROR")) {
+                        System.out.println(getName() + " detected an error on tick " + currentTick + ". Sending CrashedBroadcast.");
+                        lidarWorker.setStatus(STATUS.ERROR);
+                        sendBroadcast(new CrashedBroadcast(getName()));
+                        terminate();
+                        return;
+                    }
                     // Create a TrackedObject using the event data and cloud points
                     TrackedObject trackedObject = new TrackedObject(
-                            detectedObject.getId(),
-                            eventToProcess.getTime(),
+                            StampedCloudPoints.getId(),
+                            StampedCloudPoints.getTime(),
                             detectedObject.getDescription(),
-                            cloudPoints.getCoordinates()
+                            StampedCloudPoints.getCoordinates()
                     );
                     trackedObjects.add(trackedObject);
                 }
@@ -95,6 +112,7 @@ public class LiDarService extends MicroService {
 
             if ("TimeService".equals(broadcast.getSenderId())) {
                 System.out.println(getName() + " terminating as TimeService has ended.");
+                lidarWorker.setStatus(STATUS.DOWN);
                 terminate();
             }
         });
@@ -102,6 +120,7 @@ public class LiDarService extends MicroService {
         // Subscribe to CrashedBroadcast
         subscribeBroadcast(CrashedBroadcast.class, broadcast -> {
             System.out.println(getName() + " received CrashedBroadcast from " + broadcast.getSenderId() + ". Terminating.");
+            lidarWorker.setStatus(STATUS.DOWN);
             terminate();
         });
 
