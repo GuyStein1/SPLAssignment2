@@ -91,31 +91,51 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
-		// Events are routed to one MicroService in a round-robin manner among those subscribed to the event type.
+		// Retrieve the queue of MicroServices subscribed to this event type.
+		// If no subscriptions exist for this event type, use an empty queue.
 		Queue<MicroService> subscribers = eventSubscribers.getOrDefault(e.getClass(), new ConcurrentLinkedQueue<>());
-		MicroService chosenMs;
-		// Synchronize to ensure thread-safe round-robin delivery
+
+		MicroService chosenMs; // This will hold the MicroService chosen to handle the event.
+
+		// Synchronize on the subscribers queue to ensure thread-safe access and modification.
 		synchronized (subscribers) {
-			chosenMs = subscribers.poll(); // Get the next subscriber in the queue.
-			//???????????????
-			// Make sure microservice wasn't unregistered, but not yet removed from subscriber queue (in case of context switch)
-			while (microServiceQueues.get(chosenMs) == null) {
-				chosenMs = subscribers.poll();
+			// Poll the next MicroService in the queue (round-robin approach).
+			chosenMs = subscribers.poll();
+
+			// Check if the chosen MicroService is valid (i.e., it is registered and has a queue).
+			// If it's not valid, keep polling the next MicroService until a valid one is found or the queue is empty.
+			while (chosenMs != null && microServiceQueues.get(chosenMs) == null) {
+				chosenMs = subscribers.poll(); // Skip unregistered or invalid services.
 			}
+
+			// If a valid MicroService was found, re-add it to the end of the queue for round-robin delivery.
 			if (chosenMs != null) {
-				subscribers.add(chosenMs); // Re-add the subscriber to the end of the queue for round-robin.
+				subscribers.add(chosenMs);
 			}
 		}
+
+		// If a valid MicroService was chosen, proceed to send the event.
 		if (chosenMs != null) {
+			// Retrieve the message queue for the chosen MicroService.
 			BlockingQueue<Message> queue = microServiceQueues.get(chosenMs);
 			if (queue != null) {
-				queue.add(e); // Add the event to the subscriber's message queue.
+				// Add the event to the chosen MicroService's message queue.
+				queue.add(e);
+
+				// Create a Future object to represent the result of this event.
 				Future<T> future = new Future<>();
-				eventFutures.put(e, future); // Map the event to its corresponding Future.
+
+				// Map this event to its corresponding Future for result resolution later.
+				eventFutures.put(e, future);
+
+				// Return the Future object to the caller.
 				return future;
 			}
 		}
-		return null; // Return null if there are no subscribers for the event.
+
+		// If no valid MicroService was available to handle the event, return null.
+		// This may happen if no MicroService is subscribed to this event type.
+		return null;
 	}
 
 	@Override

@@ -95,6 +95,7 @@ public class CameraService extends MicroService {
             if (detections.isEmpty() && camera.hasNoMoreDetections(currentTick)) {
                 System.out.println(getName() + " has no more detections. Moving to DOWN status.");
                 camera.setStatus(STATUS.DOWN); // Move to DOWN status
+                sendBroadcast(new TerminatedBroadcast(getName()));
                 terminate();
             }
 
@@ -104,6 +105,7 @@ public class CameraService extends MicroService {
         subscribeBroadcast(CrashedBroadcast.class, broadcast -> {
             System.out.println(getName() + " received CrashedBroadcast from " + broadcast.getSenderId() + ". Terminating.");
             camera.setStatus(STATUS.DOWN); // Update camera status to DOWN
+            sendBroadcast(new TerminatedBroadcast(getName()));
             terminate();
         });
 
@@ -115,6 +117,7 @@ public class CameraService extends MicroService {
             if ("TimeService".equals(broadcast.getSenderId())) {
                 System.out.println(getName() + " terminating as TimeService has ended.");
                 camera.setStatus(STATUS.DOWN); // Update camera status to DOWN
+                sendBroadcast(new TerminatedBroadcast(getName()));
                 terminate();
             }
         });
