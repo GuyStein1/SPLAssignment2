@@ -70,11 +70,12 @@ public class LiDarService extends MicroService {
             System.out.println(getName() + " processing Tick: " + currentTick);
 
             // Process events in the queue if their time aligns with the frequency
-            while (!eventQueue.isEmpty() && eventQueue.peek().getTime() + frequency == currentTick) {
+            while (!eventQueue.isEmpty() && eventQueue.peek().getSentTime() + frequency == currentTick) {
 
                 DetectObjectsEvent eventToProcess = eventQueue.poll();
 
                 List<TrackedObject> trackedObjects = new ArrayList<>();
+
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object
                     StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId());
