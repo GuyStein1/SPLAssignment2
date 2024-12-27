@@ -16,15 +16,14 @@ import java.util.List;
 public class LiDarDataBase {
 
     // Fields
-    private List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
+    private final List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
     //Path to the LiDAR data JSON file.
     private final String filePath;
-
 
     // Private constructor to prevent external instantiation
     private LiDarDataBase(String filePath) {
         this.filePath = filePath;
-        cloudPoints = loadData(filePath);
+        cloudPoints = loadData();
     }
 
     // Static inner "Holder" class for singleton instantiation
@@ -81,10 +80,9 @@ public class LiDarDataBase {
     /**
      * Loads the cloud points data from a JSON file.
      *
-     * @param filePath The path to the JSON file.
      * @return A list of StampedCloudPoints.
      */
-    private List<StampedCloudPoints> loadData(String filePath) {
+    private List<StampedCloudPoints> loadData() {
         try (FileReader reader = new FileReader(filePath)) {
             Type listType = new TypeToken<List<StampedCloudPoints>>() {}.getType();
             return new Gson().fromJson(reader, listType);

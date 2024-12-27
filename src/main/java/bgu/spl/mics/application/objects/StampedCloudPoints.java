@@ -9,14 +9,14 @@ public class StampedCloudPoints {
     // Fields
     private final String id; // Unique identifier for the object
     private final int time; // The time the cloud points were tracked
-    private final List<List<Double>> cloudPoints; // List of 3D cloud points ([x, y, z])
+    private final List<List<Double>> cloudPoints; // List of cloud points
 
     /**
      * Constructor for StampedCloudPoints.
      *
      * @param id          The unique identifier for the object.
      * @param time        The time the cloud points were tracked.
-     * @param cloudPoints The list of 3D cloud points (each being a list of size 3: [x, y, z]).
+     * @param cloudPoints The list of cloud points.
      */
     public StampedCloudPoints(String id, int time, List<List<Double>> cloudPoints) {
         if (id == null || id.isEmpty()) {
@@ -52,15 +52,6 @@ public class StampedCloudPoints {
      */
     public int getTime() {
         return time;
-    }
-
-    /**
-     * Gets the list of cloud points.
-     *
-     * @return The list of cloud points.
-     */
-    public List<List<Double>> getCloudPoints() {
-        return cloudPoints;
     }
 
     /**
