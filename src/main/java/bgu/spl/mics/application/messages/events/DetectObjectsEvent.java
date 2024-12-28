@@ -11,7 +11,6 @@ import java.util.List;
 public class DetectObjectsEvent implements Event<Boolean> {
 
     private final int time; // The time at which the objects were detected.
-    private final int sentTime; // The time at which the event was sent.
     private final List<DetectedObject> detectedObjects; // List of detected objects.
 
     /**
@@ -20,9 +19,8 @@ public class DetectObjectsEvent implements Event<Boolean> {
      * @param time           The time at which the objects were detected.
      * @param detectedObjects The list of detected objects.
      */
-    public DetectObjectsEvent(int time, int sentTime, List<DetectedObject> detectedObjects) {
+    public DetectObjectsEvent(int time, List<DetectedObject> detectedObjects) {
         this.time = time;
-        this.sentTime = sentTime;
         this.detectedObjects = detectedObjects;
     }
 
@@ -33,15 +31,6 @@ public class DetectObjectsEvent implements Event<Boolean> {
      */
     public int getTime() {
         return time;
-    }
-
-    /**
-     * Gets the time at which the event was sent.
-     *
-     * @return The time the event was sent.
-     */
-    public int getSentTime() {
-        return sentTime;
     }
 
     /**

@@ -21,7 +21,7 @@ import java.util.*;
 public class LiDarService extends MicroService {
 
     private final LiDarWorkerTracker lidarWorker;
-    private final Queue<DetectObjectsEvent> eventQueue;
+    private final PriorityQueue<DetectObjectsEvent> eventQueue;
 
     /**
      * Constructor for LiDarService.
@@ -31,7 +31,7 @@ public class LiDarService extends MicroService {
     public LiDarService(LiDarWorkerTracker LiDarWorkerTracker) {
         super("LiDar_" + LiDarWorkerTracker.getId());
         this.lidarWorker = LiDarWorkerTracker;
-        this.eventQueue = new LinkedList<>();
+        this.eventQueue = new PriorityQueue<>(Comparator.comparingInt(DetectObjectsEvent::getTime));
     }
 
     /**
@@ -49,11 +49,11 @@ public class LiDarService extends MicroService {
                 return;
             }
 
-            System.out.println(getName() + " received DetectObjectsEvent at tick " + event.getSentTime());
+            System.out.println(getName() + " received DetectObjectsEvent with time " + event.getTime());
 
-            // Enqueue the event for delayed processing
+            // Log and queue the received event
             eventQueue.add(event);
-            System.out.println(getName() + " queued DetectObjectsEvent at tick " + event.getSentTime() + " for future processing.");
+            System.out.println(getName() + " queued DetectObjectsEvent with time " + event.getTime() + " for future processing.");
         });
 
         // Subscribe to TickBroadcast
@@ -67,17 +67,18 @@ public class LiDarService extends MicroService {
             int currentTick = tick.getCurrentTick(); // Get the current tick
             int frequency = lidarWorker.getFrequency(); // Get the frequency
 
-            // Process events in the queue if their time aligns with the frequency
-            while (!eventQueue.isEmpty() && eventQueue.peek().getSentTime() + frequency == currentTick) {
+            // Process events in the queue based on detection time and lidar frequency
+            while (!eventQueue.isEmpty() && eventQueue.peek().getTime() + frequency <= currentTick) {
 
+                // Poll the earliest event from the priority queue
                 DetectObjectsEvent eventToProcess = eventQueue.poll();
 
                 List<TrackedObject> trackedObjects = new ArrayList<>();
 
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
-                    // Retrieve cloud points for the detected object
+                    // Retrieve cloud points for the detected object from the LiDAR database
                     StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId());
-                    // Handle case of error
+                    // Check for errors in the cloud points data
                     if (StampedCloudPoints.getId().equals("ERROR")) {
                         System.out.println(getName() + " detected an error on tick " + currentTick + ". Sending CrashedBroadcast.");
                         lidarWorker.setStatus(STATUS.ERROR);
@@ -85,7 +86,7 @@ public class LiDarService extends MicroService {
                         terminate();
                         return;
                     }
-                    // Create a TrackedObject using the event data and cloud points
+                    // Create a TrackedObject with the retrieved cloud points and event data
                     TrackedObject trackedObject = new TrackedObject(
                             StampedCloudPoints.getId(),
                             StampedCloudPoints.getTime(),
@@ -95,7 +96,7 @@ public class LiDarService extends MicroService {
                     trackedObjects.add(trackedObject);
                 }
 
-                // Update last tracked objects
+                // Update the list of last tracked objects in the LiDAR worker
                 lidarWorker.updateLastTrackedObjects(trackedObjects);
 
                 // Create and send TrackedObjectsEvent to FusionSLAM
@@ -127,6 +128,7 @@ public class LiDarService extends MicroService {
             terminate();
         });
 
+        // Log when initialization finished
         System.out.println(getName() + " initialized.");
     }
 }

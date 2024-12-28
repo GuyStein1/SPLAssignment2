@@ -79,6 +79,11 @@ public class LidarAndCameraTest {
         // Wait for all services to complete
         timeThread.join();
 
+        cameraThread1.join();
+        cameraThread2.join();
+        lidarThread1.join();
+        lidarThread2.join();
+
         // Assert: Verify the correct processing of detections and tracked objects
         assertEquals(5, StatisticalFolder.getInstance().getNumDetectedObjects(),
                 "The number of detected objects should match the total detections from cameras.");
@@ -91,13 +96,6 @@ public class LidarAndCameraTest {
         assertFalse(lidarThread1.isAlive(), "LiDAR Service 1 thread should terminate.");
         assertFalse(lidarThread2.isAlive(), "LiDAR Service 2 thread should terminate.");
         assertFalse(timeThread.isAlive(), "TimeService thread should terminate.");
-
-        // Cleanup
-        if (cameraThread1.isAlive()) cameraThread1.interrupt();
-        if (cameraThread2.isAlive()) cameraThread2.interrupt();
-        if (lidarThread1.isAlive()) lidarThread1.interrupt();
-        if (lidarThread2.isAlive()) lidarThread2.interrupt();
-        if (timeThread.isAlive()) timeThread.interrupt();
     }
 
     @Test
@@ -166,6 +164,13 @@ public class LidarAndCameraTest {
 
         // Wait for all services to complete
         timeThread.join();
+
+        cameraThread1.join();
+        cameraThread2.join();
+        cameraThread3.join();
+        lidarThread1.join();
+        lidarThread2.join();
+        lidarThread3.join();
 
         // Assert: Verify the correct processing of detections and tracked objects
         assertEquals(6, StatisticalFolder.getInstance().getNumDetectedObjects(),
