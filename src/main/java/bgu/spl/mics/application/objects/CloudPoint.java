@@ -7,8 +7,8 @@ package bgu.spl.mics.application.objects;
 public class CloudPoint {
 
     // Fields
-    private final double x; // X-coordinate
-    private final double y; // Y-coordinate
+    private double x; // X-coordinate
+    private double y; // Y-coordinate
 
     /**
      * Constructor for CloudPoint.
@@ -37,5 +37,13 @@ public class CloudPoint {
      */
     public double getY() {
         return y;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public void setY(double y) {
+        this.y = y;
     }
 }

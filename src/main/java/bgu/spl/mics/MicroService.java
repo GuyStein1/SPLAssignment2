@@ -176,9 +176,9 @@ public abstract class MicroService implements Runnable {
                 // 2. The message type is determined at runtime and matches the callback type.
                 // The warning is suppressed because Java's type system cannot guarantee this at compile-time.
                 @SuppressWarnings("unchecked")
-                Callback<Message> callback = (Callback<Message>) callbacksMap.get(message.getClass());
-                if (callback != null) {
-                    callback.call(message); // Execute the callback
+                    Callback<Message> callback = (Callback<Message>) callbacksMap.get(message.getClass());
+                    if (callback != null) {
+                        callback.call(message); // Execute the callback
                 }
             }
         } catch (InterruptedException e) {

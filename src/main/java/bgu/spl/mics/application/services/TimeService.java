@@ -2,6 +2,7 @@ package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
+import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.StatisticalFolder;
 import bgu.spl.mics.MicroService;
 
@@ -35,7 +36,7 @@ public class TimeService extends MicroService {
     protected void initialize() {
         System.out.println("TimeService initialized.");
         try {
-            for (int currentTick = 1; currentTick <= duration; currentTick++) {
+            for (int currentTick = 1; currentTick <= duration && !FusionSlam.getInstance().isTerminated(); currentTick++) {
                 // Broadcast the current tick
                 sendBroadcast(new TickBroadcast(currentTick));
                 System.out.println("TimeService broadcasted Tick: " + currentTick);

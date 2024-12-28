@@ -11,14 +11,16 @@ import java.util.List;
 public class TrackedObjectsEvent implements Event<Void> {
 
     private final List<TrackedObject> trackedObjects; // List of tracked objects.
+    private final int detectionTimeStamp;
 
     /**
      * Constructor for TrackedObjectsEvent.
      *
      * @param trackedObjects The list of tracked objects.
      */
-    public TrackedObjectsEvent(List<TrackedObject> trackedObjects) {
+    public TrackedObjectsEvent(List<TrackedObject> trackedObjects, int detectionTimeStamp) {
         this.trackedObjects = trackedObjects;
+        this.detectionTimeStamp = detectionTimeStamp;
     }
 
     /**
@@ -28,5 +30,14 @@ public class TrackedObjectsEvent implements Event<Void> {
      */
     public List<TrackedObject> getTrackedObjects() {
         return trackedObjects;
+    }
+
+    /**
+     * Gets the detection time stamp.
+     *
+     * @return The time stamp.
+     */
+    public int getDetectionTimeStamp() {
+        return detectionTimeStamp;
     }
 }

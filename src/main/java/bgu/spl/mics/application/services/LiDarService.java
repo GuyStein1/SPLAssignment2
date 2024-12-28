@@ -100,11 +100,19 @@ public class LiDarService extends MicroService {
                 lidarWorker.updateLastTrackedObjects(trackedObjects);
 
                 // Create and send TrackedObjectsEvent to FusionSLAM
-                sendEvent(new TrackedObjectsEvent(trackedObjects));
+                sendEvent(new TrackedObjectsEvent(trackedObjects, eventToProcess.getTime()));
                 System.out.println(getName() + " sent TrackedObjectsEvent at tick " + currentTick);
 
                 // Update the StatisticalFolder
                 StatisticalFolder.getInstance().incrementTrackedObjects(trackedObjects.size());
+
+                // LiDar can terminate if all cameras are down and has no more DetectObjectsEvents to process
+                if (eventQueue.isEmpty() && FusionSlam.getInstance().getActiveCameras() == 0) {
+                    System.out.println(getName() + " has no more events. Moving to DOWN status.");
+                    lidarWorker.setStatus(STATUS.DOWN);
+                    sendBroadcast(new TerminatedBroadcast(getName()));
+                    terminate();
+                }
             }
         });
 

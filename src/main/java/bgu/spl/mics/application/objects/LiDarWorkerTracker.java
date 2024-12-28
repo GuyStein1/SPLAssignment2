@@ -12,7 +12,7 @@ public class LiDarWorkerTracker {
     // Fields
     private final int id; // Unique identifier for the LiDAR worker
     private final int frequency; // Time interval at which the LiDAR worker sends new events
-    private volatile STATUS status; // Enum representing the LiDAR's current status (Up, Down, Error)
+    private STATUS status; // Enum representing the LiDAR's current status (Up, Down, Error)
     private final List<TrackedObject> lastTrackedObjects; // List of last objects tracked by the LiDAR
     private final String filePath;
 
@@ -74,26 +74,21 @@ public class LiDarWorkerTracker {
     }
 
     /**
-     * Updates the list of last tracked objects (thread-safe).
+     * Updates the list of last tracked objects.
      *
      * @param trackedObjects The list of tracked objects.
      */
     public void updateLastTrackedObjects(List<TrackedObject> trackedObjects) {
-        synchronized (lastTrackedObjects) {
-            //why clearing? is it suppose to be the object detected in the last scan or overall the objects found
             lastTrackedObjects.clear();
             lastTrackedObjects.addAll(trackedObjects);
-        }
     }
 
     /**
-     * Gets the most recent tracked objects (thread-safe).
+     * Gets the most recent tracked objects.
      *
      * @return A copy of the last tracked objects.
      */
     public List<TrackedObject> getLastTrackedObjects() {
-        synchronized (lastTrackedObjects) {
             return new ArrayList<>(lastTrackedObjects);
-        }
     }
 }

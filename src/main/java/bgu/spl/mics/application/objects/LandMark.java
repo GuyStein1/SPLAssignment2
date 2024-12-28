@@ -7,9 +7,9 @@ import java.util.List;
  */
 public class LandMark {
     // Fields
-    private String id; // Unique identifier for the landmark
-    private String description; // Description of the landmark
-    private List<CloudPoint> coordinates; // List of coordinates in the global frame
+    private final String id; // Unique identifier for the landmark
+    private final String description; // Description of the landmark
+    private final List<CloudPoint> coordinates; // List of coordinates in the global frame
 
     public LandMark(String id, String description, List<CloudPoint> coordinates) {
         this.id = id;
