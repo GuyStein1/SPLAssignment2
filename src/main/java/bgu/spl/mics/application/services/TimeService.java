@@ -47,13 +47,13 @@ public class TimeService extends MicroService {
                 // Wait for the next tick
                 Thread.sleep(tickTime * 1000L);
             }
-            // After all ticks are complete, broadcast TerminatedBroadcast
-            sendBroadcast(new TerminatedBroadcast(getName()));
-            System.out.println("TimeService broadcasted TerminatedBroadcast.");
         } catch (InterruptedException e) {
             System.out.println("TimeService interrupted. Terminating...");
             Thread.currentThread().interrupt(); // Restore interrupt status
         } finally {
+            // After all ticks are complete or fusion slam terminated, terminate TimeService
+            sendBroadcast(new TerminatedBroadcast(getName()));
+            System.out.println("TimeService broadcasted TerminatedBroadcast.");
             terminate(); // Signal the service to terminate
         }
     }

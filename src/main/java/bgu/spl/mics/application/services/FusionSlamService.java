@@ -8,6 +8,12 @@ import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
 import bgu.spl.mics.application.objects.*;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -85,7 +91,7 @@ public class FusionSlamService extends MicroService {
                 System.out.println("FusionSlamService received TerminatedBroadcast from TimeService. Terminating.");
                 fusionSlam.setTerminated(true);
                 terminate();
-                // output logic!!!!!!!!!!
+                generateOutput();
             } else {
                 String sensorType = broadcast.getSenderId().split("_")[0];
                 if ("Camera".equals(sensorType)) {
@@ -100,7 +106,7 @@ public class FusionSlamService extends MicroService {
                 System.out.println("FusionSlamService received TerminatedBroadcast from all sensors. Terminating.");
                 fusionSlam.setTerminated(true);
                 terminate();
-                // output logic!!!!!!
+                generateOutput();
             }
         });
 
@@ -121,7 +127,59 @@ public class FusionSlamService extends MicroService {
                     + broadcast.getSenderId() +  ". Terminating.");
             fusionSlam.setTerminated(true);
             terminate();
-            // output logic!!!!
+            generateOutput();
         });
+    }
+
+    /**
+     * Generates the output based on the current state of FusionSlam.
+     * Writes the output to a JSON file.
+     */
+    private void generateOutput() {
+        // Collect data from FusionSlam
+        List<LandMark> landmarks = fusionSlam.getLandmarks();
+        List<Pose> poses = fusionSlam.getPoses();
+
+        int systemRuntime = StatisticalFolder.getInstance().getSystemRuntime();
+        int numDetectedObjects = StatisticalFolder.getInstance().getNumDetectedObjects();
+        int numTrackedObjects = StatisticalFolder.getInstance().getNumTrackedObjects();
+        int numLandmarks = landmarks.size();
+
+        // Convert landmarks into the required JSON structure
+        JsonObject landMarksJson = new JsonObject();
+        for (LandMark landMark : landmarks) {
+            JsonObject landmarkDetails = new JsonObject();
+            landmarkDetails.addProperty("id", landMark.getId());
+            landmarkDetails.addProperty("description", landMark.getDescription());
+
+            // Serialize coordinates
+            JsonArray coordinatesArray = new JsonArray();
+            for (CloudPoint point : landMark.getCoordinates()) {
+                JsonObject pointJson = new JsonObject();
+                pointJson.addProperty("x", point.getX());
+                pointJson.addProperty("y", point.getY());
+                coordinatesArray.add(pointJson);
+            }
+            landmarkDetails.add("coordinates", coordinatesArray);
+
+            landMarksJson.add(landMark.getId(), landmarkDetails);
+        }
+
+        // Build the full output JSON
+        JsonObject output = new JsonObject();
+        output.addProperty("systemRuntime", systemRuntime);
+        output.addProperty("numDetectedObjects", numDetectedObjects);
+        output.addProperty("numTrackedObjects", numTrackedObjects);
+        output.addProperty("numLandmarks", numLandmarks);
+        output.add("landMarks", landMarksJson);
+
+        // Write to file
+        try (FileWriter writer = new FileWriter("fusion_slam_output.json")) {
+            Gson gson = new Gson();
+            gson.toJson(output, writer);
+            System.out.println("FusionSlamService: Output written to fusion_slam_output.json");
+        } catch (IOException e) {
+            System.err.println("FusionSlamService: Failed to write output. " + e.getMessage());
+        }
     }
 }
