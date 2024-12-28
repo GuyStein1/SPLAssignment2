@@ -2,6 +2,8 @@ package bgu.spl.mics.application.messages.events;
 
 import bgu.spl.mics.Event;
 import bgu.spl.mics.application.objects.DetectedObject;
+import bgu.spl.mics.application.objects.StampedDetectedObjects;
+
 import java.util.List;
 
 /**
@@ -10,18 +12,13 @@ import java.util.List;
  */
 public class DetectObjectsEvent implements Event<Boolean> {
 
-    private final int time; // The time at which the objects were detected.
-    private final List<DetectedObject> detectedObjects; // List of detected objects.
+    private final StampedDetectedObjects stampedDetectedObjects;
 
     /**
      * Constructor for DetectObjectsEvent.
-     *
-     * @param time           The time at which the objects were detected.
-     * @param detectedObjects The list of detected objects.
      */
-    public DetectObjectsEvent(int time, List<DetectedObject> detectedObjects) {
-        this.time = time;
-        this.detectedObjects = detectedObjects;
+    public DetectObjectsEvent(StampedDetectedObjects stampedDetectedObjects) {
+        this.stampedDetectedObjects = stampedDetectedObjects;
     }
 
     /**
@@ -30,7 +27,7 @@ public class DetectObjectsEvent implements Event<Boolean> {
      * @return The detection time.
      */
     public int getTime() {
-        return time;
+        return stampedDetectedObjects.getTime();
     }
 
     /**
@@ -39,6 +36,6 @@ public class DetectObjectsEvent implements Event<Boolean> {
      * @return The detected objects.
      */
     public List<DetectedObject> getDetectedObjects() {
-        return detectedObjects;
+        return stampedDetectedObjects.getDetectedObjects();
     }
 }

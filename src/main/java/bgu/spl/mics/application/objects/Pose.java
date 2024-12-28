@@ -6,10 +6,36 @@ package bgu.spl.mics.application.objects;
  */
 public class Pose {
     // Fields
-    private float x; // X-coordinate of the robot
-    private float y; // Y-coordinate of the robot
-    private float yaw; // Orientation angle relative to the charging station
-    private int time; // Time when the robot reaches this pose
+    private final float x; // X-coordinate of the robot
+    private final float y; // Y-coordinate of the robot
+    private final float yaw; // Orientation angle relative to the charging station
+    private final int time; // Time when the robot reaches this pose
 
-    // TODO: Define fields and methods.
+    public Pose(int time, float x, float y, float yaw) {
+        this.time = time;
+        this.x = x;
+        this.y = y;
+        this.yaw = yaw;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public float getYaw() {
+        return yaw;
+    }
+
+    public int getTime() {
+        return time;
+    }
+
+    @Override
+    public String toString() {
+        return "Pose{time=" + time + ", x=" + x + ", y=" + y + ", yaw=" + yaw + "}";
+    }
 }

@@ -77,7 +77,7 @@ public class LiDarService extends MicroService {
 
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object from the LiDAR database
-                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId());
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(lidarWorker.getFilePath()).getCloudPoints(detectedObject.getId());
                     // Check for errors in the cloud points data
                     if (StampedCloudPoints.getId().equals("ERROR")) {
                         System.out.println(getName() + " detected an error on tick " + currentTick + ". Sending CrashedBroadcast.");

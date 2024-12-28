@@ -21,14 +21,12 @@ public class LidarAndCameraTest {
     @BeforeEach
     public void setup() {
         StatisticalFolder.getInstance().reset();
-
-        // Initialize LiDARDataBase with the provided test data file
-        String lidarDataFilePath = "C:\\Users\\guyst\\OneDrive\\Desktop\\GitHubRepos\\SPLAssignment2\\example input\\lidar_data.json"; // Update path as necessary
-        lidarDatabase = LiDarDataBase.getInstance(lidarDataFilePath);
     }
 
     @Test
     public void testSimulationWithMultipleCamerasAndLiDARs() throws InterruptedException {
+
+        String lidarDataFilePath = "C:\\Users\\guyst\\OneDrive\\Desktop\\GitHubRepos\\SPLAssignment2\\example input\\lidar_data.json";
         // Setup Cameras
         StampedDetectedObjects camera1Detection1 = new StampedDetectedObjects(2, Arrays.asList(
                 new DetectedObject("Wall_1", "Wall")
@@ -50,10 +48,10 @@ public class LidarAndCameraTest {
         CameraService cameraService2 = new CameraService(camera2);
 
         // Setup LiDARs
-        LiDarWorkerTracker lidar1 = new LiDarWorkerTracker(1, 2); // Frequency = 2
+        LiDarWorkerTracker lidar1 = new LiDarWorkerTracker(1, 2, lidarDataFilePath); // Frequency = 2
         LiDarService lidarService1 = new LiDarService(lidar1);
 
-        LiDarWorkerTracker lidar2 = new LiDarWorkerTracker(2, 3); // Frequency = 3
+        LiDarWorkerTracker lidar2 = new LiDarWorkerTracker(2, 3, lidarDataFilePath); // Frequency = 3
         LiDarService lidarService2 = new LiDarService(lidar2);
 
         // TimeService
@@ -100,6 +98,8 @@ public class LidarAndCameraTest {
 
     @Test
     public void testSimulationWithThreeCamerasAndLiDARs() throws InterruptedException {
+        String lidarDataFilePath = "C:\\Users\\guyst\\OneDrive\\Desktop\\GitHubRepos\\SPLAssignment2\\example input\\lidar_data.json";
+
         // Setup Cameras
         StampedDetectedObjects camera1Detection1 = new StampedDetectedObjects(2, Arrays.asList(
                 new DetectedObject("Wall_1", "Wall")
@@ -129,13 +129,13 @@ public class LidarAndCameraTest {
         CameraService cameraService3 = new CameraService(camera3);
 
         // Setup LiDARs
-        LiDarWorkerTracker lidar1 = new LiDarWorkerTracker(1, 2); // Frequency = 2
+        LiDarWorkerTracker lidar1 = new LiDarWorkerTracker(1, 2, lidarDataFilePath); // Frequency = 2
         LiDarService lidarService1 = new LiDarService(lidar1);
 
-        LiDarWorkerTracker lidar2 = new LiDarWorkerTracker(2, 3); // Frequency = 3
+        LiDarWorkerTracker lidar2 = new LiDarWorkerTracker(2, 3, lidarDataFilePath); // Frequency = 3
         LiDarService lidarService2 = new LiDarService(lidar2);
 
-        LiDarWorkerTracker lidar3 = new LiDarWorkerTracker(3, 4); // Frequency = 4
+        LiDarWorkerTracker lidar3 = new LiDarWorkerTracker(3, 4, lidarDataFilePath); // Frequency = 4
         LiDarService lidarService3 = new LiDarService(lidar3);
 
         // TimeService
@@ -190,6 +190,9 @@ public class LidarAndCameraTest {
 
     @Test
     public void testSimulationWithHighConcurrency() throws InterruptedException {
+
+        String lidarDataFilePath = "C:\\Users\\guyst\\OneDrive\\Desktop\\GitHubRepos\\SPLAssignment2\\example input\\lidar_data.json";
+
         int numCameras = 10;
         int numLidars = 10;
 
@@ -221,7 +224,7 @@ public class LidarAndCameraTest {
 
         List<Thread> lidarThreads = new ArrayList<>();
         for (int i = 1; i <= numLidars; i++) {
-            LiDarWorkerTracker lidarWorker = new LiDarWorkerTracker(i, i + 1);
+            LiDarWorkerTracker lidarWorker = new LiDarWorkerTracker(i, i + 1, lidarDataFilePath);
             LiDarService lidarService = new LiDarService(lidarWorker);
             lidarThreads.add(new Thread(lidarService));
         }

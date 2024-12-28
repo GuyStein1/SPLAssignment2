@@ -17,13 +17,10 @@ public class LiDarDataBase {
 
     // Fields
     private final List<StampedCloudPoints> cloudPoints; // Coordinates of objects per time
-    //Path to the LiDAR data JSON file.
-    private final String filePath;
 
     // Private constructor to prevent external instantiation
     private LiDarDataBase(String filePath) {
-        this.filePath = filePath;
-        cloudPoints = loadData();
+        cloudPoints = loadData(filePath);
     }
 
     // Static inner "Holder" class for singleton instantiation
@@ -49,15 +46,6 @@ public class LiDarDataBase {
     public static LiDarDataBase getInstance(String filePath) {
         return LDBHolder.createInstance(filePath); // Ensures initialization
     }
-    /**
-     * Returns the singleton instance of LiDarDataBase.
-     *
-     * @return The singleton instance of LiDarDataBase.
-     */
-    public static LiDarDataBase getInstance() {
-        // Called after file path was given in the first get in the main program
-        return LDBHolder.instance; // Ensures initialization
-    }
 
     /**
      * Retrieves the most recent StampedCloudPoints for a given object ID.
@@ -82,7 +70,7 @@ public class LiDarDataBase {
      *
      * @return A list of StampedCloudPoints.
      */
-    private List<StampedCloudPoints> loadData() {
+    private List<StampedCloudPoints> loadData(String filePath) {
         try (FileReader reader = new FileReader(filePath)) {
             Type listType = new TypeToken<List<StampedCloudPoints>>() {}.getType();
             return new Gson().fromJson(reader, listType);

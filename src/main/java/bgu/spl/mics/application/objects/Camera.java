@@ -14,8 +14,6 @@ public class Camera {
     private STATUS status; // Enum representing the camera's current status (Up, Down, Error)
     private final List<StampedDetectedObjects> detectedObjectsList; // Time-stamped list of detected objects
 
-    private final Object statusLock = new Object();
-
     /**
      * Constructor for Camera.
      *
@@ -56,9 +54,7 @@ public class Camera {
      * @return The current status of the camera.
      */
     public STATUS getStatus() {
-        synchronized (statusLock) {
             return status;
-        }
     }
 
     /**
@@ -67,9 +63,7 @@ public class Camera {
      * @param status The new status for the camera.
      */
     public void setStatus(STATUS status) {
-        synchronized (statusLock) {
             this.status = status;
-        }
     }
 
     /**

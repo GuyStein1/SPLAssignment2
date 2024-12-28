@@ -38,29 +38,4 @@ public class CloudPoint {
     public double getY() {
         return y;
     }
-
-    /**
-     * Calculates the distance between this point and another point in 2D space.
-     *
-     * @param other The other CloudPoint.
-     * @return The Euclidean distance to the other point.
-     */
-    public double distanceTo(CloudPoint other) {
-        double dx = this.x - other.x;
-        double dy = this.y - other.y;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    /**
-     * Converts the CloudPoint to a readable string representation.
-     *
-     * @return A string representation of the point.
-     */
-    @Override
-    public String toString() {
-        return "CloudPoint{" +
-                "x=" + x +
-                ", y=" + y +
-                '}';
-    }
 }

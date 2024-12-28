@@ -1,4 +1,5 @@
 package bgu.spl.mics.application.objects;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -12,8 +13,27 @@ public class FusionSlam {
     private List<LandMark> landmarks; // Represents the map of the environment
     private List<Pose> poses; // List of previous poses needed for calculations
 
-    // Singleton instance holder
     private static class FusionSlamHolder {
-        // TODO: Implement singleton instance logic.
+        private static final FusionSlam INSTANCE = new FusionSlam();
+    }
+
+    public static FusionSlam getInstance() {
+        return FusionSlamHolder.INSTANCE;
+    }
+
+    public synchronized void addLandmark(LandMark landMark) {
+        landmarks.add(landMark);
+    }
+
+    public synchronized void addPose(Pose pose) {
+        poses.add(pose);
+    }
+
+    public synchronized List<LandMark> getLandmarks() {
+        return new ArrayList<>(landmarks);
+    }
+
+    public synchronized List<Pose> getPoses() {
+        return new ArrayList<>(poses);
     }
 }
