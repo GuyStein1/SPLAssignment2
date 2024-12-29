@@ -185,7 +185,7 @@ public class FusionSlamService extends MicroService {
         try (FileWriter writer = new FileWriter("output_file.json")) {
             Gson gson = new Gson();
             gson.toJson(output, writer);
-            System.out.println("FusionSlamService: Output written to fusion_slam_output.json");
+            System.out.println("FusionSlamService: Output written to output_file.json");
         } catch (IOException e) {
             System.err.println("FusionSlamService: Failed to write output. " + e.getMessage());
         }

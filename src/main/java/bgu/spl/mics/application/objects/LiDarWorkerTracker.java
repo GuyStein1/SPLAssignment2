@@ -18,9 +18,6 @@ public class LiDarWorkerTracker {
 
     // Constructor
     public LiDarWorkerTracker(int id, int frequency, String filePath) {
-        if (frequency <= 0) {
-            throw new IllegalArgumentException("Frequency must be positive.");
-        }
         this.id = id;
         this.frequency = frequency;
         this.status = STATUS.UP; // Initial status is set to UP
