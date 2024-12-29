@@ -4,6 +4,7 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.events.PoseEvent;
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.CrashedBroadcast;
+import bgu.spl.mics.application.objects.FusionSlam;
 import bgu.spl.mics.application.objects.GPSIMU;
 import bgu.spl.mics.application.objects.Pose;
 import bgu.spl.mics.application.objects.STATUS;
@@ -52,6 +53,13 @@ public class PoseService extends MicroService {
                                    ", at tick " + tick.getCurrentTick() + ".");
             } else {
                 System.out.println("PoseService: No more poses available. Terminating.");
+                gpsimu.setStatus(STATUS.DOWN);
+                terminate();
+            }
+
+            // Pose service can terminate if all sensors terminated
+            if (FusionSlam.getInstance().getActiveSensors() == 0) {
+                System.out.println("PoseService: All sensors terminated. Terminating.");
                 gpsimu.setStatus(STATUS.DOWN);
                 terminate();
             }
