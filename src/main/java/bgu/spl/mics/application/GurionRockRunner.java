@@ -83,7 +83,7 @@ public class GurionRockRunner {
 
             // Initialize LiDARs
             List<LiDarService> lidarServices = new ArrayList<>();
-            JsonObject lidarConfig = config.getAsJsonObject("LidarWorkers");
+            JsonObject lidarConfig = config.getAsJsonObject("LiDarWorkers");
             String lidarDataPath = lidarConfig.get("lidars_data_path").getAsString();
             JsonArray lidarConfigs = lidarConfig.getAsJsonArray("LidarConfigurations");
             for (com.google.gson.JsonElement lidarJson : lidarConfigs) {

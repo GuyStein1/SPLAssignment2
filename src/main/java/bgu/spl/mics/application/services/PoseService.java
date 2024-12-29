@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.events.PoseEvent;
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.CrashedBroadcast;
@@ -56,13 +57,6 @@ public class PoseService extends MicroService {
                 gpsimu.setStatus(STATUS.DOWN);
                 terminate();
             }
-
-            // Pose service can terminate if all sensors terminated
-            if (FusionSlam.getInstance().getActiveSensors() == 0) {
-                System.out.println("PoseService: All sensors terminated. Terminating.");
-                gpsimu.setStatus(STATUS.DOWN);
-                terminate();
-            }
         });
 
         // Subscribe to CrashedBroadcast to handle system crashes
@@ -70,6 +64,18 @@ public class PoseService extends MicroService {
             System.out.println("PoseService received CrashedBroadcast. Terminating.");
             gpsimu.setStatus(STATUS.DOWN);
             terminate();
+        });
+
+        // Subscribe to TerminatedBroadcast to handle termination signals
+        subscribeBroadcast(TerminatedBroadcast.class, broadcast -> {
+            String senderId = broadcast.getSenderId();
+
+            // Check if the sender is TimeService or FusionSlam
+            if ("TimeService".equals(senderId) || "FusionSlamService".equals(senderId)) {
+                System.out.println("PoseService received TerminatedBroadcast from " + senderId + ". Terminating.");
+                gpsimu.setStatus(STATUS.DOWN);
+                terminate();
+            }
         });
 
         // Log when initialization finished
