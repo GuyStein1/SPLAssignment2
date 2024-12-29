@@ -46,6 +46,13 @@ public class LandMark {
             currentPoint.setX(newX);
             currentPoint.setY(newY);
         }
+
+        // Append extra CloudPoints from the new list
+        if (newCoordinates.size() > coordinates.size()) {
+            coordinates.addAll(newCoordinates.subList(coordinates.size(), newCoordinates.size()));
+        }
+
+        // No action needed for remaining old CloudPoints if new list is shorter
     }
 
 }
