@@ -93,7 +93,7 @@ public class FusionSlamService extends MicroService {
                 // Wait for all services to send terminated broadcast before generating output
                 if (fusionSlam.getActiveSensors() == 0) {
                     if (fusionSlam.isCrashed()) {
-                        generateErrorOutput();
+                        CrashOutputManager.getInstance().generateCrashOutput();
                     } else {
                         generateOutput();
                     }
@@ -112,7 +112,7 @@ public class FusionSlamService extends MicroService {
                 // Signal time service to terminate if not terminated yet
                 fusionSlam.setTerminated(true);
                 if (fusionSlam.isCrashed()) {
-                    generateErrorOutput();
+                    CrashOutputManager.getInstance().generateCrashOutput();
                 } else {
                     generateOutput();
                 }

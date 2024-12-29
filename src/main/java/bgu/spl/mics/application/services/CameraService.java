@@ -11,10 +11,7 @@ import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
 
 // Import relevant objects
-import bgu.spl.mics.application.objects.Camera;
-import bgu.spl.mics.application.objects.StampedDetectedObjects;
-import bgu.spl.mics.application.objects.StatisticalFolder;
-import bgu.spl.mics.application.objects.STATUS;
+import bgu.spl.mics.application.objects.*;
 
 import java.util.*;
 
@@ -62,20 +59,36 @@ public class CameraService extends MicroService {
             // Check for new detections to queue
             StampedDetectedObjects newDetections = camera.getStampedDetectedObjectsAtTime(currentTick);
             if (newDetections != null) {
-                // Check for errors in the new detections
-                boolean hasError = newDetections.getDetectedObjects().stream()
-                        .anyMatch(detectedObject -> "ERROR".equals(detectedObject.getId()));
+                DetectedObject errorObject = null;
 
-                if (hasError) {
-                    System.out.println(getName() + " detected an error in tick " + currentTick + ". Sending CrashedBroadcast.");
-                    camera.setStatus(STATUS.ERROR); // Update camera status to ERROR
+                // Find if exists a DetectedObject with ID "ERROR"
+                for (DetectedObject detectedObject : newDetections.getDetectedObjects()) {
+                    if ("ERROR".equals(detectedObject.getId())) {
+                        errorObject = detectedObject;
+                        break;
+                    }
+                }
+                // If an error is found, process it
+                if (errorObject != null) {
+                    String errorDescription = errorObject.getDescription();
+
+                    System.out.println(getName() + " detected an error in tick " + currentTick + ": " + errorDescription);
+
+                    // Update CrashOutputManager
+                    CrashOutputManager.getInstance().setFaultySensor(getName());
+                    CrashOutputManager.getInstance().setErrorDescription(errorDescription);
+
+                    // Broadcast crash and terminate
+                    camera.setStatus(STATUS.ERROR);
                     sendBroadcast(new CrashedBroadcast(getName()));
                     terminate();
-                    return; // Stop further processing
+                    return;
                 }
 
                 // Add valid detections to the queue
                 detections.add(newDetections);
+                // Update the map in CrashOutputManager atomically
+                CrashOutputManager.getInstance().getLastFramesOfCameras().compute(getName(), (key, existingValue) -> newDetections);
                 System.out.println(getName() + " queued " + newDetections.getDetectedObjects().size() +
                         " objects at tick " + currentTick);
             }

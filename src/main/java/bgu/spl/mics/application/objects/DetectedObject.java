@@ -45,16 +45,4 @@ public class DetectedObject {
         return description;
     }
 
-    /**
-     * Converts the DetectedObject to a string representation.
-     *
-     * @return A string representation of the object (ID and description).
-     */
-    @Override
-    public String toString() {
-        return "DetectedObject{" +
-                "id='" + id + '\'' +
-                ", description='" + description + '\'' +
-                '}';
-    }
 }
