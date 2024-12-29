@@ -106,7 +106,7 @@ public class CrashOutputManager {
         output.add("statistics", gson.toJsonTree(statistics));
 
         // Write to file
-        try (FileWriter writer = new FileWriter("crash_output.json")) {
+        try (FileWriter writer = new FileWriter("output_file.json")) {
             gson.toJson(output, writer);
             System.out.println("CrashOutputManager: Crash output written to crash_output.json");
         } catch (IOException e) {

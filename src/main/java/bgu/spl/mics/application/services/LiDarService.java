@@ -68,13 +68,13 @@ public class LiDarService extends MicroService {
             int currentTick = tick.getCurrentTick(); // Get the current tick
             int frequency = lidarWorker.getFrequency(); // Get the frequency
 
+            List<TrackedObject> trackedObjects = new ArrayList<>();
+
             // Process events in the queue based on detection time and lidar frequency
             while (!eventQueue.isEmpty() && eventQueue.peek().getTime() + frequency <= currentTick) {
 
                 // Poll the earliest event from the priority queue
                 DetectObjectsEvent eventToProcess = eventQueue.poll();
-
-                List<TrackedObject> trackedObjects = new ArrayList<>();
 
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object from the LiDAR database
@@ -107,14 +107,14 @@ public class LiDarService extends MicroService {
                     );
                     trackedObjects.add(trackedObject);
                 }
+            }
 
+            if (!trackedObjects.isEmpty()){
+                // Create and send TrackedObjectsEvent to FusionSLAM
+                sendEvent(new TrackedObjectsEvent(trackedObjects));
+                System.out.println(getName() + " sent TrackedObjectsEvent at tick " + currentTick);
                 // Update the list of last tracked objects in the LiDAR worker
                 lidarWorker.updateLastTrackedObjects(trackedObjects);
-
-                // Create and send TrackedObjectsEvent to FusionSLAM
-                sendEvent(new TrackedObjectsEvent(trackedObjects, eventToProcess.getTime()));
-                System.out.println(getName() + " sent TrackedObjectsEvent at tick " + currentTick);
-
                 // Update the StatisticalFolder
                 StatisticalFolder.getInstance().incrementTrackedObjects(trackedObjects.size());
             }

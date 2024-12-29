@@ -47,12 +47,12 @@ public class FusionSlamService extends MicroService {
         // Subscribe to TrackedObjectsEvent to update landmarks
         subscribeEvent(TrackedObjectsEvent.class, event -> {
             List<TrackedObject> trackedObjects = event.getTrackedObjects();
-            int trackedObjectsTimeStamp = event.getDetectionTimeStamp();
-            Pose currentPose = fusionSlam.getPoseByTimestamp(trackedObjectsTimeStamp);
 
             for (TrackedObject trackedObject : trackedObjects) {
-                boolean exists = false;
+                // Get the pose for the tracked object detection time
+                Pose currentPose = fusionSlam.getPoseByTimestamp(trackedObject.getTime());
                 // Check if the landmark already exists
+                boolean exists = false;
                 for (LandMark landMark : fusionSlam.getLandmarks()) {
                     if (landMark.getId().equals(trackedObject.getId())) {
                         exists = true;
@@ -182,7 +182,7 @@ public class FusionSlamService extends MicroService {
         output.add("landMarks", landMarksJson);
 
         // Write to file
-        try (FileWriter writer = new FileWriter("fusion_slam_output.json")) {
+        try (FileWriter writer = new FileWriter("output_file.json")) {
             Gson gson = new Gson();
             gson.toJson(output, writer);
             System.out.println("FusionSlamService: Output written to fusion_slam_output.json");
