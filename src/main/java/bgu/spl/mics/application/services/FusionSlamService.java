@@ -132,8 +132,14 @@ public class FusionSlamService extends MicroService {
 
         // Subscribe to CrashedBroadcast
         subscribeBroadcast(CrashedBroadcast.class, broadcast -> {
-            System.out.println("FusionSlamService received CrashBroadcast from "
-                    + broadcast.getSenderId() +  ". Terminating.");
+            System.out.println("FusionSlamService received CrashBroadcast from " + broadcast.getSenderId() +  ". Terminating.");
+            // Decrement sensor count because sensor that crashed doesn't send termination
+            String sensorType = broadcast.getSenderId().split("_")[0];
+            if ("Camera".equals(sensorType)) {
+                fusionSlam.setActiveCameras(fusionSlam.getActiveCameras() - 1);
+            }
+            fusionSlam.setActiveSensors(fusionSlam.getActiveSensors() - 1);
+
             fusionSlam.setTerminated(true);
             fusionSlam.setCrashed(true);
             // Generate error output when received terminated broadcast from all services

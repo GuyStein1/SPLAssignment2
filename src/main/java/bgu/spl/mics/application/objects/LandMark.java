@@ -35,7 +35,7 @@ public class LandMark {
      * @param newCoordinates The new CloudPoints to average with the current ones.
      */
     public void updateCoordinates(List<CloudPoint> newCoordinates) {
-        for (int i = 0; i < coordinates.size(); i++) {
+        for (int i = 0; i < Math.min(coordinates.size(), newCoordinates.size()); i++) {
             CloudPoint currentPoint = coordinates.get(i);
             CloudPoint newPoint = newCoordinates.get(i);
 

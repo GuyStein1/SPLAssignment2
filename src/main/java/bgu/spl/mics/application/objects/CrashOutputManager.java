@@ -24,8 +24,6 @@ public class CrashOutputManager {
     private final AtomicReference<String> errorDescription = new AtomicReference<>(null);
     private final Map<String, StampedDetectedObjects> lastFramesOfCameras = new ConcurrentHashMap<>();
     private final List<LiDarWorkerTracker> liDars = Collections.synchronizedList(new ArrayList<>());
-    private List<Pose> poses;
-    private StatisticalFolder statistics;
 
     // Private constructor to prevent instantiation
     private CrashOutputManager() {
@@ -67,22 +65,6 @@ public class CrashOutputManager {
         return liDars;
     }
 
-    public List<Pose> getPoses() {
-        return poses;
-    }
-
-    public void setPoses(List<Pose> poses) {
-        this.poses = poses;
-    }
-
-    public StatisticalFolder getStatistics() {
-        return statistics;
-    }
-
-    public void setStatistics(StatisticalFolder statistics) {
-        this.statistics = statistics;
-    }
-
     // Method to generate crash output JSON
     public void generateCrashOutput() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -102,13 +84,13 @@ public class CrashOutputManager {
         }
         output.add("lastFramesOfLiDars", lidarJson);
 
-        output.add("poses", gson.toJsonTree(poses));
-        output.add("statistics", gson.toJsonTree(statistics));
+        output.add("poses", gson.toJsonTree(FusionSlam.getInstance().getPoses()));
+        output.add("statistics", gson.toJsonTree(StatisticalFolder.getInstance()));
 
         // Write to file
         try (FileWriter writer = new FileWriter("output_file.json")) {
             gson.toJson(output, writer);
-            System.out.println("CrashOutputManager: Crash output written to crash_output.json");
+            System.out.println("CrashOutputManager: Crash output written to output_file.json");
         } catch (IOException e) {
             System.err.println("CrashOutputManager: Failed to write crash output. " + e.getMessage());
         }
