@@ -14,9 +14,9 @@ public class FusionSlam {
     private final List<LandMark> landmarks; // Represents the map of the environment
     private final List<Pose> poses; // List of previous poses needed for calculations
     private int activeCameras; // Number of currently active camera sensors
-    private int activeLiDars; // Number of currently active LiDAR sensors
     private int activeSensors; // Total number of currently active sensors (both cameras and LiDARs)
     private boolean terminated;
+    private boolean crashed;
 
     private final Object lock = new Object();
 
@@ -39,19 +39,14 @@ public class FusionSlam {
         landmarks = new ArrayList<>();
         poses = new ArrayList<>();
         activeCameras = 0;
-        activeLiDars = 0;
         activeSensors = 0;
         terminated = false;
+        crashed = false;
     }
 
     // Setter for active cameras
     public void setActiveCameras(int activeCameras) {
         this.activeCameras = activeCameras;
-    }
-
-    // Setter for active LiDARs
-    public void setActiveLiDars(int activeLiDars) {
-        this.activeLiDars = activeLiDars;
     }
 
     // Setter for total active sensors
@@ -62,11 +57,6 @@ public class FusionSlam {
     // Getter for active cameras
     public int getActiveCameras() {
         return activeCameras;
-    }
-
-    // Getter for active LiDARs
-    public int getActiveLiDars() {
-        return activeLiDars;
     }
 
     // Getter for total active sensors
@@ -84,6 +74,14 @@ public class FusionSlam {
         synchronized (lock) {
             this.terminated = terminated;
         }
+    }
+
+    public boolean isCrashed() {
+        return crashed;
+    }
+
+    public void setCrashed(boolean crashed) {
+        this.crashed = crashed;
     }
 
     /**

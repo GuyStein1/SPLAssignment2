@@ -90,23 +90,33 @@ public class FusionSlamService extends MicroService {
             if ("TimeService".equals(broadcast.getSenderId())) {
                 System.out.println("FusionSlamService received TerminatedBroadcast from TimeService. Terminating.");
                 fusionSlam.setTerminated(true);
-                terminate();
-                generateOutput();
+                // Wait for all services to send terminated broadcast before generating output
+                if (fusionSlam.getActiveSensors() == 0) {
+                    if (fusionSlam.isCrashed()) {
+                        generateErrorOutput();
+                    } else {
+                        generateOutput();
+                    }
+                    terminate();
+                }
             } else {
                 String sensorType = broadcast.getSenderId().split("_")[0];
                 if ("Camera".equals(sensorType)) {
                     fusionSlam.setActiveCameras(fusionSlam.getActiveCameras() - 1);
-                } else if ("LiDAR".equals(sensorType)) {
-                    fusionSlam.setActiveLiDars(fusionSlam.getActiveLiDars() - 1);
                 }
                 fusionSlam.setActiveSensors(fusionSlam.getActiveSensors() - 1);
             }
 
             if (fusionSlam.getActiveSensors() == 0) {
                 System.out.println("FusionSlamService received TerminatedBroadcast from all sensors. Terminating.");
+                // Signal time service to terminate if not terminated yet
                 fusionSlam.setTerminated(true);
+                if (fusionSlam.isCrashed()) {
+                    generateErrorOutput();
+                } else {
+                    generateOutput();
+                }
                 terminate();
-                generateOutput();
             }
         });
 
@@ -115,10 +125,8 @@ public class FusionSlamService extends MicroService {
             int currentTick = tick.getCurrentTick();
 
             System.out.println("FusionSlamService received TickBroadcast: Tick " + currentTick +
-                    ". FusionSlamService Status: Active Cameras = "
-                    + FusionSlam.getInstance().getActiveCameras()
-                    + ", Active LiDARs = "
-                    + FusionSlam.getInstance().getActiveLiDars());
+                    ". FusionSlamService Status: Active Sensors = "
+                    + fusionSlam.getActiveSensors());
         });
 
         // Subscribe to CrashedBroadcast
@@ -126,8 +134,8 @@ public class FusionSlamService extends MicroService {
             System.out.println("FusionSlamService received CrashBroadcast from "
                     + broadcast.getSenderId() +  ". Terminating.");
             fusionSlam.setTerminated(true);
-            terminate();
-            generateOutput();
+            fusionSlam.setCrashed(true);
+            // Generate error output when received terminated broadcast from all services
         });
     }
 
