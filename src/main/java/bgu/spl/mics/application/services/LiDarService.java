@@ -32,6 +32,7 @@ public class LiDarService extends MicroService {
         super("LiDar_" + LiDarWorkerTracker.getId());
         this.lidarWorker = LiDarWorkerTracker;
         this.eventQueue = new PriorityQueue<>(Comparator.comparingInt(DetectObjectsEvent::getTime));
+        CrashOutputManager.getInstance().getLiDars().add(LiDarWorkerTracker);
     }
 
     /**
@@ -77,15 +78,26 @@ public class LiDarService extends MicroService {
 
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object from the LiDAR database
-                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(lidarWorker.getFilePath()).getCloudPoints(detectedObject.getId());
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(lidarWorker.getFilePath())
+                            .getCloudPoints(detectedObject.getId(), eventToProcess.getTime());
+
                     // Check for errors in the cloud points data
-                    if (StampedCloudPoints.getId().equals("ERROR")) {
-                        System.out.println(getName() + " detected an error on tick " + currentTick + ". Sending CrashedBroadcast.");
+                    if (StampedCloudPoints != null && StampedCloudPoints.getId().equals("ERROR")) {
+
+                        String errorDescription = getName() + " disconnected";
+
+                        System.out.println(errorDescription + " on tick " + currentTick + ".");
+
+                        // Update CrashOutputManager
+                        CrashOutputManager.getInstance().setFaultySensor(getName());
+                        CrashOutputManager.getInstance().setErrorDescription(errorDescription);
+
                         lidarWorker.setStatus(STATUS.ERROR);
                         sendBroadcast(new CrashedBroadcast(getName()));
                         terminate();
                         return;
                     }
+
                     // Create a TrackedObject with the retrieved cloud points and event data
                     TrackedObject trackedObject = new TrackedObject(
                             StampedCloudPoints.getId(),
@@ -105,14 +117,14 @@ public class LiDarService extends MicroService {
 
                 // Update the StatisticalFolder
                 StatisticalFolder.getInstance().incrementTrackedObjects(trackedObjects.size());
+            }
 
-                // LiDar can terminate if all cameras are down and has no more DetectObjectsEvents to process
-                if (eventQueue.isEmpty() && FusionSlam.getInstance().getActiveCameras() == 0) {
-                    System.out.println(getName() + " has no more events. Moving to DOWN status.");
-                    lidarWorker.setStatus(STATUS.DOWN);
-                    sendBroadcast(new TerminatedBroadcast(getName()));
-                    terminate();
-                }
+            // LiDar can terminate if all cameras are down and has no more DetectObjectsEvents to process
+            if (eventQueue.isEmpty() && FusionSlam.getInstance().getActiveCameras() == 0) {
+                System.out.println(getName() + " has no more events. Moving to DOWN status.");
+                lidarWorker.setStatus(STATUS.DOWN);
+                sendBroadcast(new TerminatedBroadcast(getName()));
+                terminate();
             }
         });
 

@@ -48,21 +48,24 @@ public class LiDarDataBase {
     }
 
     /**
-     * Retrieves the most recent StampedCloudPoints for a given object ID.
+     * Retrieves the most recent StampedCloudPoints for a given object ID and time.
      *
-     * @param id The ID of the object to retrieve cloud points for.
-     * @return The StampedCloudPoints.
-     * @throws IllegalArgumentException if no data is found for the given ID.
+     * @param id   The ID of the object to retrieve cloud points for.
+     * @param time The timestamp to match.
+     * @return The StampedCloudPoints if a match is found; otherwise, null.
      */
-    public StampedCloudPoints getCloudPoints(String id) {
-        StampedCloudPoints matchingCloudPoints = null;
-
+    public StampedCloudPoints getCloudPoints(String id, int time) {
         for (StampedCloudPoints cloud : cloudPoints) {
-            if (cloud.getId().equals(id)) {
-                matchingCloudPoints = cloud;
+            // Check if the ID and time match
+            if (cloud.getId().equals(id) && cloud.getTime() == time) {
+                return cloud;
+            }
+            // If the ID is "ERROR" and time matches, return this as an error
+            if (cloud.getId().equals("ERROR") && cloud.getTime() == time) {
+                return cloud;
             }
         }
-        return matchingCloudPoints;
+        return null; // No matching cloud points found
     }
 
     /**

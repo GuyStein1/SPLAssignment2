@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +23,7 @@ public class CrashOutputManager {
     private final AtomicReference<String> faultySensor = new AtomicReference<>(null);
     private final AtomicReference<String> errorDescription = new AtomicReference<>(null);
     private final Map<String, StampedDetectedObjects> lastFramesOfCameras = new ConcurrentHashMap<>();
-    private final Map<String, StampedCloudPoints> lastFramesOfLiDars = new ConcurrentHashMap<>();
+    private final List<LiDarWorkerTracker> liDars = Collections.synchronizedList(new ArrayList<>());
     private List<Pose> poses;
     private StatisticalFolder statistics;
 
@@ -61,8 +63,8 @@ public class CrashOutputManager {
         return lastFramesOfCameras;
     }
 
-    public Map<String, StampedCloudPoints> getLastFramesOfLiDars() {
-        return lastFramesOfLiDars;
+    public List<LiDarWorkerTracker> getLiDars() {
+        return liDars;
     }
 
     public List<Pose> getPoses() {
@@ -89,7 +91,17 @@ public class CrashOutputManager {
         output.addProperty("faultySensor", faultySensor.get());
         output.addProperty("errorDescription", errorDescription.get());
         output.add("lastFramesOfCameras", gson.toJsonTree(lastFramesOfCameras));
-        output.add("lastFramesOfLiDars", gson.toJsonTree(lastFramesOfLiDars));
+
+        // Collect last tracked objects from all LiDARs
+        JsonObject lidarJson = new JsonObject();
+        for (LiDarWorkerTracker lidar : liDars) {
+            List<TrackedObject> lastTracked = lidar.getLastTrackedObjects();
+            if (!lastTracked.isEmpty()) {
+                lidarJson.add(lidar.getId() + "", gson.toJsonTree(lastTracked));
+            }
+        }
+        output.add("lastFramesOfLiDars", lidarJson);
+
         output.add("poses", gson.toJsonTree(poses));
         output.add("statistics", gson.toJsonTree(statistics));
 
@@ -100,15 +112,5 @@ public class CrashOutputManager {
         } catch (IOException e) {
             System.err.println("CrashOutputManager: Failed to write crash output. " + e.getMessage());
         }
-    }
-
-    // Reset method for testing purposes
-    public void reset() {
-        faultySensor.set(null);
-        errorDescription.set(null);
-        lastFramesOfCameras.clear();
-        lastFramesOfLiDars.clear();
-        poses = null;
-        statistics = null;
     }
 }
