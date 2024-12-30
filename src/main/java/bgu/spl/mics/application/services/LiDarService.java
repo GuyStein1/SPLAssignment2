@@ -22,6 +22,7 @@ public class LiDarService extends MicroService {
 
     private final LiDarWorkerTracker lidarWorker;
     private final PriorityQueue<DetectObjectsEvent> eventQueue;
+    private int currentTick;
 
     /**
      * Constructor for LiDarService.
@@ -32,6 +33,7 @@ public class LiDarService extends MicroService {
         super("LiDar_" + LiDarWorkerTracker.getId());
         this.lidarWorker = LiDarWorkerTracker;
         this.eventQueue = new PriorityQueue<>(Comparator.comparingInt(DetectObjectsEvent::getTime));
+        this.currentTick = 0;
         CrashOutputManager.getInstance().getLiDars().add(LiDarWorkerTracker);
     }
 
@@ -45,19 +47,64 @@ public class LiDarService extends MicroService {
         // Subscribe to DetectObjectsEvent
         subscribeEvent(DetectObjectsEvent.class, event -> {
 
-            if (lidarWorker.getStatus() != STATUS.UP) {
-                System.out.println(getName() + " is not operational. Ignoring DetectObjectsEvent.");
-                return;
-            }
-
             System.out.println(getName() + " received DetectObjectsEvent with time " + event.getTime());
-            // Log and queue the received event
-            eventQueue.add(event);
-            System.out.println(getName() + " queued DetectObjectsEvent with time " + event.getTime() + " for future processing.");
+
+            if (event.getTime() + lidarWorker.getFrequency() <= currentTick) {
+
+                List<TrackedObject> trackedObjects = new ArrayList<>();
+
+                for (DetectedObject detectedObject : event.getDetectedObjects()) {
+                    // Retrieve cloud points for the detected object from the LiDAR database
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(lidarWorker.getFilePath())
+                            .getCloudPoints(detectedObject.getId(), event.getTime());
+
+                    // Check for errors in the cloud points data
+                    if (StampedCloudPoints != null && StampedCloudPoints.getId().equals("ERROR")) {
+                        String errorDescription = getName() + " disconnected";
+                        System.out.println(errorDescription + " on tick " + currentTick + ".");
+                        // Update CrashOutputManager
+                        CrashOutputManager.getInstance().setFaultySensor(getName());
+                        CrashOutputManager.getInstance().setErrorDescription(errorDescription);
+                        // Terminate
+                        lidarWorker.setStatus(STATUS.ERROR);
+                        sendBroadcast(new CrashedBroadcast(getName()));
+                        terminate();
+                        return;
+                    }
+
+                    // Create a TrackedObject with the retrieved cloud points and event data
+                    TrackedObject trackedObject = new TrackedObject(
+                            StampedCloudPoints.getId(),
+                            StampedCloudPoints.getTime(),
+                            detectedObject.getDescription(),
+                            StampedCloudPoints.getCoordinates()
+                    );
+                    trackedObjects.add(trackedObject);
+                }
+
+                if (!trackedObjects.isEmpty()){
+                    // Create and send TrackedObjectsEvent to FusionSLAM
+                    sendEvent(new TrackedObjectsEvent(trackedObjects));
+                    System.out.println(getName() + " sent TrackedObjectsEvent at tick " + currentTick);
+                    // Update the list of last tracked objects in the LiDAR worker
+                    lidarWorker.updateLastTrackedObjects(trackedObjects);
+                    // Update the StatisticalFolder
+                    StatisticalFolder.getInstance().incrementTrackedObjects(trackedObjects.size());
+                }
+
+                // Signal to camera the detected object event was received and processed
+                complete(event, true);
+            } else {
+                // Log and queue the received event for future processing according to frequency
+                eventQueue.add(event);
+                System.out.println(getName() + " queued DetectObjectsEvent with time " + event.getTime() + " for future processing.");
+            }
         });
 
         // Subscribe to TickBroadcast
         subscribeBroadcast(TickBroadcast.class, tick -> {
+            // Increment Current tick
+            currentTick++;
 
             // Check LiDar status before processing
             if (lidarWorker.getStatus() != STATUS.UP) {
@@ -105,10 +152,10 @@ public class LiDarService extends MicroService {
                             StampedCloudPoints.getCoordinates()
                     );
                     trackedObjects.add(trackedObject);
-
-                    // Signal to camera the detected object event was received and proccesed
-                    complete(eventToProcess, true);
                 }
+
+                // Signal to camera the detected object event was received and proccesed
+                complete(eventToProcess, true);
             }
 
             if (!trackedObjects.isEmpty()){
