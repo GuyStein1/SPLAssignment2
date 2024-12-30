@@ -6,59 +6,30 @@ import java.util.List;
  * Used by the LiDAR system to store and process point cloud data for tracked objects.
  */
 public class StampedCloudPoints {
+
     // Fields
     private final String id; // Unique identifier for the object
     private final int time; // The time the cloud points were tracked
     private final List<List<Double>> cloudPoints; // List of cloud points
 
-    /**
-     * Constructor for StampedCloudPoints.
-     *
-     * @param id          The unique identifier for the object.
-     * @param time        The time the cloud points were tracked.
-     * @param cloudPoints The list of cloud points.
-     */
+    // Constructor
     public StampedCloudPoints(String id, int time, List<List<Double>> cloudPoints) {
-        if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException("ID cannot be null or empty");
-        }
-
-        if (time < 0) {
-            throw new IllegalArgumentException("Time must be non-negative");
-        }
-
-        if (cloudPoints == null || cloudPoints.isEmpty()) {
-            throw new IllegalArgumentException("CloudPoints cannot be null or empty");
-        }
-
         this.id = id;
         this.time = time;
         this.cloudPoints = cloudPoints;
     }
 
-    /**
-     * Gets the unique identifier for the object.
-     *
-     * @return The unique identifier (ID).
-     */
+    // Getters
     public String getId() {
         return id;
     }
 
-    /**
-     * Gets the time at which the cloud points were tracked.
-     *
-     * @return The timestamp.
-     */
+
     public int getTime() {
         return time;
     }
 
-    /**
-     * Converts the raw cloud points to a list of CloudPoint objects.
-     *
-     * @return A list of CloudPoint objects.
-     */
+    // Converts the raw cloud points to a list of CloudPoint objects
     public List<CloudPoint> getCoordinates() {
         List<CloudPoint> coordinates = new ArrayList<>();
         for (List<Double> point : cloudPoints) {
@@ -67,11 +38,7 @@ public class StampedCloudPoints {
         return coordinates;
     }
 
-    /**
-     * Calculates the total number of cloud points stored.
-     *
-     * @return The total number of cloud points.
-     */
+    // Retrieves the total number of cloud points stored
     public int getTotalPoints() {
         return cloudPoints.size();
     }

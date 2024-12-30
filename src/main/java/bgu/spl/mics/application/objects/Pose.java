@@ -11,6 +11,7 @@ public class Pose {
     private final float yaw; // Orientation angle relative to the charging station
     private final int time; // Time when the robot reaches this pose
 
+    // Constructor
     public Pose(int time, float x, float y, float yaw) {
         this.time = time;
         this.x = x;
@@ -18,6 +19,7 @@ public class Pose {
         this.yaw = yaw;
     }
 
+    // Getters
     public float getX() {
         return x;
     }
@@ -34,6 +36,7 @@ public class Pose {
         return time;
     }
 
+    // To String for debug purposes
     @Override
     public String toString() {
         return "Pose{time=" + time + ", x=" + x + ", y=" + y + ", yaw=" + yaw + "}";

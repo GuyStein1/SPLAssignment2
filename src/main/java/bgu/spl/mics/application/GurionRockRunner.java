@@ -157,7 +157,7 @@ public class GurionRockRunner {
             }
 
             // Ensure all services are initialized before starting TimeService
-            Thread.sleep(200); // Allow time for other threads to initialize
+            Thread.sleep(100); // Allow time for other threads to initialize
 
             // Start TimeService
             timeServiceThread.start();

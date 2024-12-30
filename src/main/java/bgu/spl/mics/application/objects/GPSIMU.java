@@ -17,20 +17,13 @@ public class GPSIMU {
         this.poseList = poseList;
     }
 
-    /**
-     * Updates the current tick.
-     *
-     * @param tick The current tick.
-     */
+    // Updates the current tick
     public void updateTick(int tick) {
         this.currentTick = tick;
     }
 
-    /**
-     * Gets the current pose based on the tick.
-     *
-     * @return The current pose, or null if no pose is available for the tick.
-     */
+
+    // Gets the current pose based on the tick
     public Pose getCurrentPose() {
         for (Pose pose : poseList) {
             if (pose.getTime() == currentTick) {
@@ -40,10 +33,12 @@ public class GPSIMU {
         return null; // No pose available for the current tick
     }
 
+    // Get for Status
     public STATUS getStatus() {
         return status;
     }
 
+    // Set status
     public void setStatus(STATUS status) {
         this.status = status;
     }

@@ -11,12 +11,14 @@ public class LandMark {
     private final String description; // Description of the landmark
     private final List<CloudPoint> coordinates; // List of coordinates in the global frame
 
+    // Constructor
     public LandMark(String id, String description, List<CloudPoint> coordinates) {
         this.id = id;
         this.description = description;
         this.coordinates = coordinates;
     }
 
+    // Getters
     public String getId() {
         return id;
     }
@@ -29,11 +31,7 @@ public class LandMark {
         return coordinates;
     }
 
-    /**
-     * Updates the coordinates of the landmark by averaging the new CloudPoints with the existing ones.
-     *
-     * @param newCoordinates The new CloudPoints to average with the current ones.
-     */
+    // Updates the coordinates of the landmark by averaging the new CloudPoints with the existing ones
     public void updateCoordinates(List<CloudPoint> newCoordinates) {
         for (int i = 0; i < Math.min(coordinates.size(), newCoordinates.size()); i++) {
             CloudPoint currentPoint = coordinates.get(i);

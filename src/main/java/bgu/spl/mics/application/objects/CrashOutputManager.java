@@ -48,13 +48,13 @@ public class CrashOutputManager {
         this.faultySensor.compareAndSet(null, faultySensor);
     }
 
-    public String getErrorDescription() {
-        return errorDescription.get();
-    }
-
     // Make sure the error description matches the first sensor that had an error.
     public void setErrorDescription(String errorDescription) {
         this.errorDescription.compareAndSet(null, errorDescription);
+    }
+
+    public String getErrorDescription() {
+        return errorDescription.get();
     }
 
     public Map<String, StampedDetectedObjects> getLastFramesOfCameras() {
