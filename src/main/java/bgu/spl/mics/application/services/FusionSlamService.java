@@ -170,46 +170,35 @@ public class FusionSlamService extends MicroService {
         int numTrackedObjects = StatisticalFolder.getInstance().getNumTrackedObjects();
         int numLandmarks = landmarks.size();
 
-        // Build the output as a StringBuilder for better control over formatting
-        StringBuilder outputBuilder = new StringBuilder();
-        outputBuilder.append("{\n");
-        outputBuilder.append("  \"systemRuntime\": ").append(systemRuntime).append(",\n");
-        outputBuilder.append("  \"numDetectedObjects\": ").append(numDetectedObjects).append(",\n");
-        outputBuilder.append("  \"numTrackedObjects\": ").append(numTrackedObjects).append(",\n");
-        outputBuilder.append("  \"numLandmarks\": ").append(numLandmarks).append(",\n");
-        outputBuilder.append("  \"landMarks\": {\n");
+        // Create JSON objects using GSON
+        JsonObject output = new JsonObject();
+        output.addProperty("systemRuntime", systemRuntime);
+        output.addProperty("numDetectedObjects", numDetectedObjects);
+        output.addProperty("numTrackedObjects", numTrackedObjects);
+        output.addProperty("numLandmarks", numLandmarks);
 
-        for (int i = 0; i < landmarks.size(); i++) {
-            LandMark landMark = landmarks.get(i);
-            outputBuilder.append("    \"").append(landMark.getId()).append("\": {\n");
-            outputBuilder.append("      \"id\": \"").append(landMark.getId()).append("\",\n");
-            outputBuilder.append("      \"description\": \"").append(landMark.getDescription()).append("\",\n");
-            outputBuilder.append("      \"coordinates\": [\n");
+        JsonObject landMarksJson = new JsonObject();
+        for (LandMark landmark : landmarks) {
+            JsonObject landmarkDetails = new JsonObject();
+            landmarkDetails.addProperty("id", landmark.getId());
+            landmarkDetails.addProperty("description", landmark.getDescription());
 
-            List<CloudPoint> coordinates = landMark.getCoordinates();
-            for (int j = 0; j < coordinates.size(); j++) {
-                CloudPoint point = coordinates.get(j);
-                outputBuilder.append("        {\"x\": ").append(point.getX()).append(", \"y\": ").append(point.getY()).append("}");
-                if (j < coordinates.size() - 1) {
-                    outputBuilder.append(","); // Add a comma if not the last coordinate
-                }
-                outputBuilder.append("\n");
+            JsonArray coordinatesArray = new JsonArray();
+            for (CloudPoint point : landmark.getCoordinates()) {
+                JsonObject pointJson = new JsonObject();
+                pointJson.addProperty("x", point.getX());
+                pointJson.addProperty("y", point.getY());
+                coordinatesArray.add(pointJson);
             }
-
-            outputBuilder.append("      ]\n");
-            outputBuilder.append("    }");
-            if (i < landmarks.size() - 1) {
-                outputBuilder.append(","); // Add a comma if not the last landmark
-            }
-            outputBuilder.append("\n");
+            landmarkDetails.add("coordinates", coordinatesArray);
+            landMarksJson.add(landmark.getId(), landmarkDetails);
         }
+        output.add("landMarks", landMarksJson);
 
-        outputBuilder.append("  }\n");
-        outputBuilder.append("}\n");
-
-        // Write to file
+        // Write JSON to output file
         try (FileWriter writer = new FileWriter("output_file.json")) {
-            writer.write(outputBuilder.toString());
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            gson.toJson(output, writer);
             System.out.println("FusionSlamService: Output written to output_file.json");
         } catch (IOException e) {
             System.err.println("FusionSlamService: Failed to write output. " + e.getMessage());

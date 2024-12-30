@@ -70,9 +70,9 @@ public class CrashOutputManager {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         JsonObject output = new JsonObject();
+        output.addProperty("error", errorDescription.get());
         output.addProperty("faultySensor", faultySensor.get());
-        output.addProperty("errorDescription", errorDescription.get());
-        output.add("lastFramesOfCameras", gson.toJsonTree(lastFramesOfCameras));
+        output.add("lastCamerasFrame", gson.toJsonTree(lastFramesOfCameras));
 
         // Collect last tracked objects from all LiDARs
         JsonObject lidarJson = new JsonObject();
@@ -82,7 +82,7 @@ public class CrashOutputManager {
                 lidarJson.add(lidar.getId() + "", gson.toJsonTree(lastTracked));
             }
         }
-        output.add("lastFramesOfLiDars", lidarJson);
+        output.add("lastLiDarWorkerTrackersFrame", lidarJson);
 
         output.add("poses", gson.toJsonTree(FusionSlam.getInstance().getPoses()));
         output.add("statistics", gson.toJsonTree(StatisticalFolder.getInstance()));
