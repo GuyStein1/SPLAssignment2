@@ -114,6 +114,7 @@ public class LiDarService extends MicroService {
             int currentTick = tick.getCurrentTick(); // Get the current tick
             int frequency = lidarWorker.getFrequency(); // Get the frequency
 
+            // Initialize an empty list to store tracked objects
             List<TrackedObject> trackedObjects = new ArrayList<>();
 
             // Process events in the queue based on detection time and lidar frequency
@@ -158,6 +159,7 @@ public class LiDarService extends MicroService {
                 complete(eventToProcess, true);
             }
 
+            // If tracked objects were created, sent tracked objects event
             if (!trackedObjects.isEmpty()){
                 // Create and send TrackedObjectsEvent to FusionSLAM
                 sendEvent(new TrackedObjectsEvent(trackedObjects));
