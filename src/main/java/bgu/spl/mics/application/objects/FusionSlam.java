@@ -17,6 +17,7 @@ public class FusionSlam {
     private int activeSensors; // Total number of currently active sensors (both cameras and LiDARs)
     private boolean terminated;
     private boolean crashed;
+    private boolean timeTerminated;
 
     private final Object lock = new Object();
 
@@ -42,6 +43,7 @@ public class FusionSlam {
         activeSensors = 0;
         terminated = false;
         crashed = false;
+        timeTerminated = false;
     }
 
     // Setter for active cameras
@@ -82,6 +84,15 @@ public class FusionSlam {
 
     public void setCrashed(boolean crashed) {
         this.crashed = crashed;
+    }
+
+    // Getter for time terminated
+    public boolean isTimeTerminated() {
+        return timeTerminated;
+    }
+    // Setter for time terminated
+    public void setTimeTerminated (boolean timeTerminated) {
+        this.timeTerminated = timeTerminated;
     }
 
     /**

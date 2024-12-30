@@ -90,7 +90,10 @@ public class FusionSlamService extends MicroService {
         subscribeBroadcast(TerminatedBroadcast.class, broadcast -> {
             if ("TimeService".equals(broadcast.getSenderId())) {
                 System.out.println("FusionSlamService received TerminatedBroadcast from TimeService. Terminating.");
+                // Mark fusion slam as terminated (optional as only time service checks this field)
                 fusionSlam.setTerminated(true);
+                // Signal to fusion slam that time service terminated
+                fusionSlam.setTimeTerminated(true);
                 // Wait for all services to send terminated broadcast before generating output
                 if (fusionSlam.getActiveSensors() == 0) {
                     if (fusionSlam.isCrashed()) {
@@ -104,20 +107,27 @@ public class FusionSlamService extends MicroService {
                 String sensorType = broadcast.getSenderId().split("_")[0];
                 if ("Camera".equals(sensorType)) {
                     fusionSlam.setActiveCameras(fusionSlam.getActiveCameras() - 1);
+                    fusionSlam.setActiveSensors(fusionSlam.getActiveSensors() - 1);
+                } else if ("LiDar".equals(sensorType)) {
+                    fusionSlam.setActiveSensors(fusionSlam.getActiveSensors() - 1);
                 }
-                fusionSlam.setActiveSensors(fusionSlam.getActiveSensors() - 1);
             }
 
+            // Check if no sensors are active
             if (fusionSlam.getActiveSensors() == 0) {
-                System.out.println("FusionSlamService received TerminatedBroadcast from all sensors. Terminating.");
-                // Signal time service to terminate if not terminated yet
-                fusionSlam.setTerminated(true);
-                if (fusionSlam.isCrashed()) {
-                    CrashOutputManager.getInstance().generateCrashOutput();
+                // If time service didn't terminate yet, signal it to terminate and produce the output after it sent terminated broadcast.
+                if (!fusionSlam.isTimeTerminated()) {
+                    fusionSlam.setTerminated(true);
                 } else {
-                    generateOutput();
+                    // Time service already terminated; finalize process
+                    System.out.println("FusionSlamService received TerminatedBroadcast from all sensors. Terminating.");
+                    if (fusionSlam.isCrashed()) {
+                        CrashOutputManager.getInstance().generateCrashOutput();
+                    } else {
+                        generateOutput();
+                    }
+                    terminate();
                 }
-                terminate();
             }
         });
 
