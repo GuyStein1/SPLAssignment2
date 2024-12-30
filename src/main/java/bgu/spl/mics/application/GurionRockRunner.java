@@ -34,7 +34,6 @@ public class GurionRockRunner {
         }
 
         String configPath = args[0];
-        PoseService poseService = null; // Declare PoseService here to resolve scoping issue
 
         try (FileReader reader = new FileReader(configPath)) {
             // Parse configuration file
@@ -95,6 +94,7 @@ public class GurionRockRunner {
 
             // Initialize PoseService
             String poseFilePath = config.get("poseJsonFile").getAsString();
+            PoseService poseService = null;
             try (FileReader poseReader = new FileReader(poseFilePath)) {
                 // Parse the pose data
                 java.lang.reflect.Type poseListType = new com.google.gson.reflect.TypeToken<List<Pose>>() {}.getType();
@@ -124,7 +124,7 @@ public class GurionRockRunner {
             fusionSlam.setActiveCameras(numActiveCameras);
             fusionSlam.setActiveSensors(numActiveSensors);
 
-            // Print debug information (optional)
+            // Print debug information
             System.out.println("Active Cameras: " + numActiveCameras);
             System.out.println("Active Sensors: " + numActiveSensors);
 
@@ -141,10 +141,11 @@ public class GurionRockRunner {
             for (LiDarService lidarService : lidarServices) {
                 threads.add(new Thread(lidarService));
             }
-            if (poseService != null) {
-                threads.add(new Thread(poseService)); // Add PoseService thread only if it was successfully initialized
-            }
+
+            threads.add(new Thread(poseService));
+
             threads.add(new Thread(fusionSlamService));
+
             Thread timeServiceThread = new Thread(timeService);
             threads.add(timeServiceThread);
 

@@ -15,6 +15,8 @@ import com.google.gson.JsonObject;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -27,6 +29,7 @@ import java.util.List;
 public class FusionSlamService extends MicroService {
 
     private final FusionSlam fusionSlam;
+    private final HashMap<Integer, List<TrackedObject>> pendingTrackedObjects;
 
     /**
      * Constructor for FusionSlamService.
@@ -36,6 +39,7 @@ public class FusionSlamService extends MicroService {
     public FusionSlamService(FusionSlam fusionSlam) {
         super("FusionSlamService");
         this.fusionSlam = fusionSlam;
+        pendingTrackedObjects = new HashMap<>();
     }
 
     /**
@@ -47,33 +51,19 @@ public class FusionSlamService extends MicroService {
     protected void initialize() {
         // Subscribe to TrackedObjectsEvent to update landmarks
         subscribeEvent(TrackedObjectsEvent.class, event -> {
+
             List<TrackedObject> trackedObjects = event.getTrackedObjects();
 
             for (TrackedObject trackedObject : trackedObjects) {
                 // Get the pose for the tracked object detection time
                 Pose currentPose = fusionSlam.getPoseByTimestamp(trackedObject.getTime());
-                // Check if the landmark already exists
-                boolean exists = false;
-                for (LandMark landMark : fusionSlam.getLandmarks()) {
-                    if (landMark.getId().equals(trackedObject.getId())) {
-                        exists = true;
-                        // Transform the trackedObject's coordinates (CloudPoints) to the global frame
-                        List<CloudPoint> globalCoordinates = fusionSlam.transformToGlobal(trackedObject.getCoordinates(), currentPose);
-                        // Update coordinates by averaging the last measurements with the new ones
-                        landMark.updateCoordinates(globalCoordinates);
-                        break;
-                    }
-                }
-                // If landmark does not exist, create and add a new one
-                if (!exists) {
-                    List<CloudPoint> globalCoordinates = fusionSlam.transformToGlobal(trackedObject.getCoordinates(), currentPose);
-                    LandMark newLandMark = new LandMark(
-                            trackedObject.getId(),
-                            trackedObject.getDescription(),
-                            globalCoordinates
-                    );
-                    fusionSlam.addLandmark(newLandMark);
-                    StatisticalFolder.getInstance().incrementLandmarks(1);
+                // Make sure relevant pose is available before processing
+                if (currentPose == null) {
+                    // Store the tracked object for later processing
+                    pendingTrackedObjects.putIfAbsent(trackedObject.getTime(), new ArrayList<>());
+                    pendingTrackedObjects.get(trackedObject.getTime()).add(trackedObject);
+                } else {
+                    processTrackedObject(trackedObject, currentPose);
                 }
             }
             System.out.println("FusionSlamService processed TrackedObjectsEvent.");
@@ -82,8 +72,17 @@ public class FusionSlamService extends MicroService {
         // Subscribe to PoseEvent to update the robot's pose
         subscribeEvent(PoseEvent.class, event -> {
             Pose newPose = event.getPose();
-            System.out.println("FusionSlamService received PoseEvent: " + newPose);
             fusionSlam.addPose(newPose);
+            int poseTime = newPose.getTime();
+            System.out.println("FusionSlamService received PoseEvent: " + newPose);
+
+            // Check if there are pending tracked objects for this pose's timestamp
+            List<TrackedObject> trackedObjects = pendingTrackedObjects.remove(poseTime);
+            if (trackedObjects != null) {
+                for (TrackedObject trackedObject : trackedObjects) {
+                    processTrackedObject(trackedObject, newPose);
+                }
+            }
         });
 
         // Subscribe to TerminatedBroadcast
@@ -154,6 +153,33 @@ public class FusionSlamService extends MicroService {
             fusionSlam.setCrashed(true);
             // Generate error output when received terminated broadcast from all services
         });
+    }
+
+    // Helper function to process tracked objects
+    private void processTrackedObject(TrackedObject trackedObject, Pose pose) {
+            // Check if the landmark already exists
+            boolean exists = false;
+            for (LandMark landMark : fusionSlam.getLandmarks()) {
+                if (landMark.getId().equals(trackedObject.getId())) {
+                    exists = true;
+                    // Transform the trackedObject's coordinates (CloudPoints) to the global frame
+                    List<CloudPoint> globalCoordinates = fusionSlam.transformToGlobal(trackedObject.getCoordinates(), pose);
+                    // Update coordinates by averaging the last measurements with the new ones
+                    landMark.updateCoordinates(globalCoordinates);
+                    break;
+                }
+            }
+            // If landmark does not exist, create and add a new one
+            if (!exists) {
+                List<CloudPoint> globalCoordinates = fusionSlam.transformToGlobal(trackedObject.getCoordinates(), pose);
+                LandMark newLandMark = new LandMark(
+                        trackedObject.getId(),
+                        trackedObject.getDescription(),
+                        globalCoordinates
+                );
+                fusionSlam.addLandmark(newLandMark);
+                StatisticalFolder.getInstance().incrementLandmarks(1);
+            }
     }
 
     /**

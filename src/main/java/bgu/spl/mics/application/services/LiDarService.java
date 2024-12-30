@@ -51,7 +51,6 @@ public class LiDarService extends MicroService {
             }
 
             System.out.println(getName() + " received DetectObjectsEvent with time " + event.getTime());
-
             // Log and queue the received event
             eventQueue.add(event);
             System.out.println(getName() + " queued DetectObjectsEvent with time " + event.getTime() + " for future processing.");
@@ -106,6 +105,9 @@ public class LiDarService extends MicroService {
                             StampedCloudPoints.getCoordinates()
                     );
                     trackedObjects.add(trackedObject);
+
+                    // Signal to camera the detected object event was received and proccesed
+                    complete(eventToProcess, true);
                 }
             }
 
