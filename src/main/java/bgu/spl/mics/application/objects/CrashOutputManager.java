@@ -87,6 +87,18 @@ public class CrashOutputManager {
         output.add("poses", gson.toJsonTree(FusionSlam.getInstance().getPoses()));
         output.add("statistics", gson.toJsonTree(StatisticalFolder.getInstance()));
 
+        // Add landmarks to output
+        JsonObject landmarksJson = new JsonObject();
+        for (LandMark landmark : FusionSlam.getInstance().getLandmarks()) {
+            JsonObject landmarkJson = new JsonObject();
+            landmarkJson.addProperty("id", landmark.getId());
+            landmarkJson.addProperty("description", landmark.getDescription());
+            landmarkJson.add("coordinates", gson.toJsonTree(landmark.getCoordinates()));
+
+            landmarksJson.add(landmark.getId(), landmarkJson);
+        }
+        output.add("landmarks", landmarksJson);
+
         // Write to file
         try (FileWriter writer = new FileWriter("output_file.json")) {
             gson.toJson(output, writer);

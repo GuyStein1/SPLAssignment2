@@ -89,6 +89,8 @@ public class CameraService extends MicroService {
                 detections.add(newDetections);
                 // Update the map in CrashOutputManager atomically
                 CrashOutputManager.getInstance().getLastFramesOfCameras().compute(getName(), (key, existingValue) -> newDetections);
+                // Update number of detected objects  in StatisticalFolder
+                StatisticalFolder.getInstance().incrementDetectedObjects(newDetections.getDetectedObjects().size());
                 System.out.println(getName() + " queued " + newDetections.getDetectedObjects().size() +
                         " objects at tick " + currentTick);
             }
@@ -99,9 +101,6 @@ public class CameraService extends MicroService {
                 sendEvent(new DetectObjectsEvent(detectionToSend));
                 System.out.println(getName() + " sent DetectObjectsEvent with " + detectionToSend.getDetectedObjects().size() +
                         " objects at tick " + currentTick);
-
-                // Update StatisticalFolder
-                StatisticalFolder.getInstance().incrementDetectedObjects(detectionToSend.getDetectedObjects().size());
             }
 
             // Check if the camera has no more detections
