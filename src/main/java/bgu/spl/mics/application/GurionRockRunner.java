@@ -6,8 +6,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,58 +35,78 @@ public class GurionRockRunner {
             return;
         }
 
+        // Path to the configuration file provided as the first argument
         String configPath = args[0];
+        File configFile = new File(configPath);
+        String configDirectory = configFile.getParent(); // Extract the directory containing the config file
 
         try (FileReader reader = new FileReader(configPath)) {
-            // Parse configuration file
+            // Parse the configuration file into a JsonObject
             Gson gson = new Gson();
             JsonObject config = gson.fromJson(reader, JsonObject.class);
 
             // Initialize Cameras
             List<CameraService> cameraServices = new ArrayList<>();
             JsonObject camerasConfig = config.getAsJsonObject("Cameras");
+
+            // Get the path to the camera data file and adjust it to be relative to the config directory
             String cameraDataPath = camerasConfig.get("camera_datas_path").getAsString();
+            cameraDataPath = Paths.get(configDirectory, cameraDataPath).toString();
+
+            // Get camera configurations
             JsonArray cameraConfigs = camerasConfig.getAsJsonArray("CamerasConfigurations");
 
-            // Parse camera data
-            FileReader cameraDataReader = new FileReader(cameraDataPath);
-            JsonObject cameraData = gson.fromJson(cameraDataReader, JsonObject.class);
-            cameraDataReader.close();
+            // Parse camera data from the JSON file
+            try (FileReader cameraDataReader = new FileReader(cameraDataPath)) {
+                JsonObject cameraData = gson.fromJson(cameraDataReader, JsonObject.class);
 
-            for (com.google.gson.JsonElement cameraConfig : cameraConfigs) {
-                JsonObject cameraJson = cameraConfig.getAsJsonObject();
-                int id = cameraJson.get("id").getAsInt();
-                int frequency = cameraJson.get("frequency").getAsInt();
-                String cameraKey = cameraJson.get("camera_key").getAsString();
+                // Create CameraService for each camera configuration
+                for (com.google.gson.JsonElement cameraConfig : cameraConfigs) {
+                    JsonObject cameraJson = cameraConfig.getAsJsonObject();
+                    int id = cameraJson.get("id").getAsInt();
+                    int frequency = cameraJson.get("frequency").getAsInt();
+                    String cameraKey = cameraJson.get("camera_key").getAsString();
 
-                // Get the list of StampedDetectedObjects for this camera
-                JsonArray stampedObjectsJson = cameraData.getAsJsonArray(cameraKey);
-                List<StampedDetectedObjects> detectedObjectsList = new ArrayList<>();
-                for (com.google.gson.JsonElement stampedObjectJson : stampedObjectsJson) {
-                    JsonObject stampedObject = stampedObjectJson.getAsJsonObject();
-                    int time = stampedObject.get("time").getAsInt();
-                    JsonArray detectedObjectsJson = stampedObject.getAsJsonArray("detectedObjects");
+                    // Retrieve stamped detected objects for this camera
+                    JsonArray stampedObjectsJson = cameraData.getAsJsonArray(cameraKey);
+                    List<StampedDetectedObjects> detectedObjectsList = new ArrayList<>();
 
-                    List<DetectedObject> detectedObjects = new ArrayList<>();
-                    for (com.google.gson.JsonElement detectedObjectJson : detectedObjectsJson) {
-                        JsonObject detectedObject = detectedObjectJson.getAsJsonObject();
-                        String idStr = detectedObject.get("id").getAsString();
-                        String description = detectedObject.get("description").getAsString();
-                        detectedObjects.add(new DetectedObject(idStr, description));
+                    for (com.google.gson.JsonElement stampedObjectJson : stampedObjectsJson) {
+                        JsonObject stampedObject = stampedObjectJson.getAsJsonObject();
+                        int time = stampedObject.get("time").getAsInt();
+                        JsonArray detectedObjectsJson = stampedObject.getAsJsonArray("detectedObjects");
+
+                        List<DetectedObject> detectedObjects = new ArrayList<>();
+                        for (com.google.gson.JsonElement detectedObjectJson : detectedObjectsJson) {
+                            JsonObject detectedObject = detectedObjectJson.getAsJsonObject();
+                            String idStr = detectedObject.get("id").getAsString();
+                            String description = detectedObject.get("description").getAsString();
+                            detectedObjects.add(new DetectedObject(idStr, description));
+                        }
+                        detectedObjectsList.add(new StampedDetectedObjects(time, detectedObjects));
                     }
-                    detectedObjectsList.add(new StampedDetectedObjects(time, detectedObjects));
-                }
 
-                // Create Camera and CameraService
-                Camera camera = new Camera(id, frequency, detectedObjectsList);
-                cameraServices.add(new CameraService(camera));
+                    // Create Camera object and corresponding CameraService
+                    Camera camera = new Camera(id, frequency, detectedObjectsList);
+                    cameraServices.add(new CameraService(camera));
+                }
             }
 
             // Initialize LiDARs
             List<LiDarService> lidarServices = new ArrayList<>();
             JsonObject lidarConfig = config.getAsJsonObject("LiDarWorkers");
+
+            // Get the path to the LiDAR data file and adjust it to be relative to the config directory
             String lidarDataPath = lidarConfig.get("lidars_data_path").getAsString();
+            lidarDataPath = Paths.get(configDirectory, lidarDataPath).toString();
+
+            // Initialize the singleton instance of LiDarDataBase
+            LiDarDataBase.initializeInstance(lidarDataPath);
+
+            // Get LiDAR configurations
             JsonArray lidarConfigs = lidarConfig.getAsJsonArray("LidarConfigurations");
+
+            // Create LiDarService for each LiDAR configuration
             for (com.google.gson.JsonElement lidarJson : lidarConfigs) {
                 int id = lidarJson.getAsJsonObject().get("id").getAsInt();
                 int frequency = lidarJson.getAsJsonObject().get("frequency").getAsInt();
@@ -94,21 +116,17 @@ public class GurionRockRunner {
 
             // Initialize PoseService
             String poseFilePath = config.get("poseJsonFile").getAsString();
-            PoseService poseService = null;
+            poseFilePath = Paths.get(configDirectory, poseFilePath).toString(); // Adjust path
+            PoseService poseService;
+
+            // Parse pose data from the JSON file
             try (FileReader poseReader = new FileReader(poseFilePath)) {
-                // Parse the pose data
                 java.lang.reflect.Type poseListType = new com.google.gson.reflect.TypeToken<List<Pose>>() {}.getType();
                 List<Pose> poseList = gson.fromJson(poseReader, poseListType);
 
-                // Initialize GPSIMU
+                // Create GPSIMU and initialize PoseService
                 GPSIMU gpsimu = new GPSIMU(poseList);
-
-                // Initialize PoseService
                 poseService = new PoseService(gpsimu);
-            } catch (IOException e) {
-                System.err.println("Error reading pose file: " + e.getMessage());
-                e.printStackTrace();
-                return; // Exit or handle error appropriately
             }
 
             // Initialize FusionSlamService
@@ -128,7 +146,7 @@ public class GurionRockRunner {
             System.out.println("Active Cameras: " + numActiveCameras);
             System.out.println("Active Sensors: " + numActiveSensors);
 
-            // Initialize TimeService
+            // Initialize simulation parameters
             int tickTime = config.get("TickTime").getAsInt();
             int duration = config.get("Duration").getAsInt();
             TimeService timeService = new TimeService(tickTime, duration);
@@ -141,25 +159,22 @@ public class GurionRockRunner {
             for (LiDarService lidarService : lidarServices) {
                 threads.add(new Thread(lidarService));
             }
-
             threads.add(new Thread(poseService));
-
             threads.add(new Thread(fusionSlamService));
 
+            // TimeService runs separately
             Thread timeServiceThread = new Thread(timeService);
             threads.add(timeServiceThread);
 
-            // Start all service threads except TimeService
+            // Start all threads except TimeService
             for (Thread thread : threads) {
                 if (thread != timeServiceThread) {
                     thread.start();
                 }
             }
 
-            // Ensure all services are initialized before starting TimeService
-            Thread.sleep(100); // Allow time for other threads to initialize
-
-            // Start TimeService
+            // Allow other services to initialize before starting TimeService
+            Thread.sleep(100);
             timeServiceThread.start();
 
             // Wait for all threads to complete
@@ -167,11 +182,9 @@ public class GurionRockRunner {
                 thread.join();
             }
 
-        } catch (IOException e) {
-            System.err.println("Error reading configuration file: " + e.getMessage());
+        } catch (IOException | InterruptedException e) {
+            // Handle exceptions for file reading and thread interruptions
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            System.err.println("Simulation interrupted: " + e.getMessage());
             Thread.currentThread().interrupt();
         }
     }

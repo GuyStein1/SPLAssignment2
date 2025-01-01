@@ -28,23 +28,19 @@ public class LiDarDataBase {
         private static LiDarDataBase instance = null;
 
         // Handles actual singleton creation logic
-        private static LiDarDataBase createInstance(String filePath) {
+        private static void createInstance(String filePath) {
             if (instance == null) {
                 instance = new LiDarDataBase(filePath); // Create and initialize the singleton
             }
-            return instance; // Return the instance (only initialized once)
         }
     }
 
-    /**
-     * Returns the singleton instance of LiDarDataBase. Initializes it using the file path if
-     * this is the first call.
-     *
-     * @param filePath The path to the LiDAR data file.
-     * @return The singleton instance of LiDarDataBase.
-     */
-    public static LiDarDataBase getInstance(String filePath) {
-        return LDBHolder.createInstance(filePath); // Ensures initialization
+    public static void initializeInstance(String filePath) {
+        LDBHolder.createInstance(filePath);
+    }
+
+    public static LiDarDataBase getInstance() {
+        return LDBHolder.instance; // Ensures initialization
     }
 
     /**

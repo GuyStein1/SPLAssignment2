@@ -14,7 +14,6 @@ public class LiDarWorkerTracker {
     private final int frequency; // Time interval at which the LiDAR worker sends new events
     private STATUS status; // Enum representing the LiDAR's current status (Up, Down, Error)
     private final List<TrackedObject> lastTrackedObjects; // List of last objects tracked by the LiDAR
-    private final String filePath;
 
     // Constructor
     public LiDarWorkerTracker(int id, int frequency, String filePath) {
@@ -22,7 +21,6 @@ public class LiDarWorkerTracker {
         this.frequency = frequency;
         this.status = STATUS.UP; // Initial status is set to UP
         this.lastTrackedObjects = Collections.synchronizedList(new ArrayList<>()); // Thread-safe list
-        this.filePath = filePath;
     }
 
     /**
@@ -41,15 +39,6 @@ public class LiDarWorkerTracker {
      */
     public int getFrequency() {
         return frequency;
-    }
-
-    /**
-     * Retrieves the file path for the lidar worker.
-     *
-     * @return The file path.
-     */
-    public String getFilePath() {
-        return filePath;
     }
 
     /**

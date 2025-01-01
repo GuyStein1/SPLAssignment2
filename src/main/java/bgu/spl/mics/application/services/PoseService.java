@@ -54,6 +54,7 @@ public class PoseService extends MicroService {
             } else {
                 System.out.println("PoseService: No more poses available. Terminating.");
                 gpsimu.setStatus(STATUS.DOWN);
+                sendBroadcast(new TerminatedBroadcast(getName()));
                 terminate();
             }
         });
@@ -62,6 +63,7 @@ public class PoseService extends MicroService {
         subscribeBroadcast(CrashedBroadcast.class, broadcast -> {
             System.out.println("PoseService received CrashedBroadcast. Terminating.");
             gpsimu.setStatus(STATUS.DOWN);
+            sendBroadcast(new TerminatedBroadcast(getName()));
             terminate();
         });
 
@@ -69,10 +71,11 @@ public class PoseService extends MicroService {
         subscribeBroadcast(TerminatedBroadcast.class, broadcast -> {
             String senderId = broadcast.getSenderId();
 
-            // Check if the sender is TimeService or FusionSlam
-            if ("TimeService".equals(senderId) || "FusionSlamService".equals(senderId)) {
+            // Check if the sender is TimeService and terminate if so
+            if ("TimeService".equals(senderId)) {
                 System.out.println("PoseService received TerminatedBroadcast from " + senderId + ". Terminating.");
                 gpsimu.setStatus(STATUS.DOWN);
+                sendBroadcast(new TerminatedBroadcast(getName()));
                 terminate();
             }
         });

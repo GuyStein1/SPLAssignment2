@@ -55,8 +55,7 @@ public class LiDarService extends MicroService {
 
                 for (DetectedObject detectedObject : event.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object from the LiDAR database
-                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(lidarWorker.getFilePath())
-                            .getCloudPoints(detectedObject.getId(), event.getTime());
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId(), event.getTime());
 
                     // Check for errors in the cloud points data
                     if (StampedCloudPoints != null && StampedCloudPoints.getId().equals("ERROR")) {
@@ -125,8 +124,7 @@ public class LiDarService extends MicroService {
 
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object from the LiDAR database
-                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance(lidarWorker.getFilePath())
-                            .getCloudPoints(detectedObject.getId(), eventToProcess.getTime());
+                    StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId(), eventToProcess.getTime());
 
                     // Check for errors in the cloud points data
                     if (StampedCloudPoints != null && StampedCloudPoints.getId().equals("ERROR")) {
@@ -155,7 +153,7 @@ public class LiDarService extends MicroService {
                     trackedObjects.add(trackedObject);
                 }
 
-                // Signal to camera the detected object event was received and proccesed
+                // Signal to camera the detected object event was received and processed
                 complete(eventToProcess, true);
             }
 

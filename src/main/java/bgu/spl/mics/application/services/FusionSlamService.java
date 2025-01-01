@@ -63,7 +63,7 @@ public class FusionSlamService extends MicroService {
                     pendingTrackedObjects.putIfAbsent(trackedObject.getTime(), new ArrayList<>());
                     pendingTrackedObjects.get(trackedObject.getTime()).add(trackedObject);
                 } else {
-                    processTrackedObject(trackedObject, currentPose);
+                    fusionSlam.processTrackedObject(trackedObject, currentPose);
                 }
             }
             System.out.println("FusionSlamService processed TrackedObjectsEvent.");
@@ -80,7 +80,7 @@ public class FusionSlamService extends MicroService {
             List<TrackedObject> trackedObjects = pendingTrackedObjects.remove(poseTime);
             if (trackedObjects != null) {
                 for (TrackedObject trackedObject : trackedObjects) {
-                    processTrackedObject(trackedObject, newPose);
+                    fusionSlam.processTrackedObject(trackedObject, newPose);
                 }
             }
         });
@@ -153,33 +153,6 @@ public class FusionSlamService extends MicroService {
             fusionSlam.setCrashed(true);
             // Generate error output when received terminated broadcast from all services
         });
-    }
-
-    // Helper function to process tracked objects
-    private void processTrackedObject(TrackedObject trackedObject, Pose pose) {
-            // Check if the landmark already exists
-            boolean exists = false;
-            for (LandMark landMark : fusionSlam.getLandmarks()) {
-                if (landMark.getId().equals(trackedObject.getId())) {
-                    exists = true;
-                    // Transform the trackedObject's coordinates (CloudPoints) to the global frame
-                    List<CloudPoint> globalCoordinates = fusionSlam.transformToGlobal(trackedObject.getCoordinates(), pose);
-                    // Update coordinates by averaging the last measurements with the new ones
-                    landMark.updateCoordinates(globalCoordinates);
-                    break;
-                }
-            }
-            // If landmark does not exist, create and add a new one
-            if (!exists) {
-                List<CloudPoint> globalCoordinates = fusionSlam.transformToGlobal(trackedObject.getCoordinates(), pose);
-                LandMark newLandMark = new LandMark(
-                        trackedObject.getId(),
-                        trackedObject.getDescription(),
-                        globalCoordinates
-                );
-                fusionSlam.addLandmark(newLandMark);
-                StatisticalFolder.getInstance().incrementLandmarks(1);
-            }
     }
 
     /**
