@@ -79,7 +79,7 @@ public class CrashOutputManager {
         for (LiDarWorkerTracker lidar : liDars) {
             List<TrackedObject> lastTracked = lidar.getLastTrackedObjects();
             if (!lastTracked.isEmpty()) {
-                lidarJson.add("LiDar_" + lidar.getId(), gson.toJsonTree(lastTracked));
+                lidarJson.add("LiDarWorkerTracker" + lidar.getId(), gson.toJsonTree(lastTracked));
             }
         }
         output.add("lastLiDarWorkerTrackersFrame", lidarJson);
