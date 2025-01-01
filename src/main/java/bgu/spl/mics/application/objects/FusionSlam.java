@@ -192,4 +192,18 @@ public class FusionSlam {
             StatisticalFolder.getInstance().incrementLandmarks(1);
         }
     }
+
+    /**
+     * Resets the state of the FusionSlam singleton.
+     * This method is intended for testing purposes only.
+     */
+    public void reset() {
+        landmarks.clear();
+        poses.clear();
+        activeCameras.set(0);
+        activeSensors = 0;
+        terminated = false;
+        crashed = false;
+        timeTerminated = false;
+    }
 }
