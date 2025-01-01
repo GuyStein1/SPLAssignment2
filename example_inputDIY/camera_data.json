@@ -1,0 +1,42 @@
+{
+    "camera1": [
+        {"time": 2, "detectedObjects": [{"id": "Wall_1", "description": "Wall segment near entry"}]},
+        {"time": 4, "detectedObjects": [{"id": "Wall_3", "description": "Wall segment near corner"}]},
+        {"time": 6, "detectedObjects": [{"id": "Wall_4", "description": "Far wall near exit"}]},
+        {"time": 10, "detectedObjects": [{"id": "Wall_1", "description": "Wall segment near entry"}]},
+        {"time": 14, "detectedObjects": [{"id": "Wall_5", "description": "Wall segment near back"}]},
+        {"time": 16, "detectedObjects": [{"id": "Wall_4", "description": "Far wall near exit"}]},
+        {"time": 22, "detectedObjects": [{"id": "Wall_6", "description": "Wall segment near hallway"}]},
+        {"time": 30, "detectedObjects": [{"id": "Wall_2", "description": "Wall segment near back"}]},
+        {"time": 36, "detectedObjects": [{"id": "Wall_3", "description": "Wall segment near side hall"}]}
+    ],
+    "camera2": [
+        {"time": 4, "detectedObjects": [{"id": "Chair_Base_1", "description": "Chair base near table"}]},
+        {"time": 10, "detectedObjects": [{"id": "Chair_Base_2", "description": "Chair base near desk"}]},
+        {"time": 14, "detectedObjects": [{"id": "Chair_Base_1", "description": "Chair base near wall"}]},
+        {"time": 18, "detectedObjects": [{"id": "Chair_Base_1", "description": "Chair base near center"}]},
+        {"time": 26, "detectedObjects": [{"id": "Chair_Base_2", "description": "Chair base near desk"}]},
+        {"time": 36, "detectedObjects": [{"id": "Chair_Base_4", "description": "Chair base near corner"}]},
+        {"time": 40, "detectedObjects": [{"id": "Chair_Base_3", "description": "Chair base near edge"}]}
+    ],
+    "camera3": [
+        {"time": 12, "detectedObjects": [{"id": "Wall_3", "description": "Wall segment in hallway"}]},
+        {"time": 12, "detectedObjects": [{"id": "Table_1", "description": "Round table in center"}]},
+        {"time": 24, "detectedObjects": [{"id": "Table_1", "description": "Round table near edge"}]},
+        {"time": 34, "detectedObjects": [{"id": "Table_2", "description": "Square table in back"}]},
+        {"time": 40, "detectedObjects": [{"id": "Table_3", "description": "Round table near center"}]}
+    ],
+    "camera4": [
+        {"time": 6, "detectedObjects": [{"id": "Circular_Base_1", "description": "Circular base near stand"}]},
+        {"time": 20, "detectedObjects": [{"id": "Circular_Base_1", "description": "Circular base near edge"}]},
+        {"time": 32, "detectedObjects": [{"id": "Circular_Base_2", "description": "Circular base near corner"}]},
+        {"time": 28, "detectedObjects": [{"id": "Door_Frame", "description": "Frame of door near entry"}]},
+        {"time": 7, "detectedObjects": [{"id": "Door", "description": "Main door near side"}]}
+    ],
+    "camera5": [
+        {"time": 22, "detectedObjects": [{"id": "Chair_Base_3", "description": "Chair base near wall"}]},
+        {"time": 26, "detectedObjects": [{"id": "Wall_1", "description": "Wall segment near edge"}]},
+        {"time": 34, "detectedObjects": [{"id": "Wall_7", "description": "Wall segment near side hall"}]},
+        {"time": 38, "detectedObjects": [{"id": "Wall_3", "description": "Wall segment near corner"}]}
+    ]
+}

@@ -14,13 +14,8 @@ public class Camera {
     private STATUS status; // Enum representing the camera's current status (Up, Down, Error)
     private final List<StampedDetectedObjects> detectedObjectsList; // Time-stamped list of detected objects
 
-    /**
-     * Constructor for Camera.
-     *
-     * @param id                The unique identifier for the camera.
-     * @param frequency         The time interval (in ticks) at which the camera sends new events.
-     * @param detectedObjectsList The initial list of detected objects.
-     */
+
+    // Constructor
     public Camera(int id, int frequency, List<StampedDetectedObjects> detectedObjectsList) {
         this.id = id;
         this.frequency = frequency;
@@ -30,38 +25,25 @@ public class Camera {
                 : Collections.emptyList(); // Ensure immutability of preloaded data
     }
 
-    /**
-     * Gets the camera's unique identifier.
-     *
-     * @return The camera ID.
-     */
+    // Gets the id of the camera
     public int getID() {
         return id;
     }
 
-    /**
-     * Gets the camera's frequency.
-     *
-     * @return The frequency of the camera.
-     */
+
+    // Gets the camera's frequency
     public int getFrequency() {
         return frequency;
     }
 
-    /**
-     * Gets the camera's status.
-     *
-     * @return The current status of the camera.
-     */
+
+    // Gets the camera's status
     public STATUS getStatus() {
             return status;
     }
 
-    /**
-     * Sets the camera's status.
-     *
-     * @param status The new status for the camera.
-     */
+
+    // Sets the camera's status
     public void setStatus(STATUS status) {
             this.status = status;
     }
@@ -81,12 +63,7 @@ public class Camera {
         return null; // Return null if no detections are found at the given time
     }
 
-    /**
-     * Checks if there are any future detections remaining in the camera.
-     *
-     * @param currentTick The current simulation tick.
-     * @return True if there are no more future detections, false otherwise.
-     */
+    // Checks if there are any future detections remaining in the camera
     public boolean hasNoMoreDetections(int currentTick) {
         for (StampedDetectedObjects detection : detectedObjectsList) {
             if (detection.getTime() > currentTick) {
