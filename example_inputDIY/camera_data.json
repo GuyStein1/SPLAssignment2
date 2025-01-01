@@ -20,7 +20,13 @@
         {"time": 40, "detectedObjects": [{"id": "Chair_Base_3", "description": "Chair base near edge"}]}
     ],
     "camera3": [
-        {"time": 12, "detectedObjects": [{"id": "Wall_3", "description": "Wall segment in hallway"}]},
+        {
+            "time": 12,
+            "detectedObjects": [
+                {"id": "Wall_3", "description": "Wall segment in hallway"},
+                {"id": "Table_1", "description": "Round table in center"}
+            ]
+        },
         {"time": 12, "detectedObjects": [{"id": "Table_1", "description": "Round table in center"}]},
         {"time": 24, "detectedObjects": [{"id": "Table_1", "description": "Round table near edge"}]},
         {"time": 34, "detectedObjects": [{"id": "Table_2", "description": "Square table in back"}]},

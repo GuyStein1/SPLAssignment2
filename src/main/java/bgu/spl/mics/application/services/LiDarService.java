@@ -49,6 +49,7 @@ public class LiDarService extends MicroService {
 
             System.out.println(getName() + " received DetectObjectsEvent with time " + event.getTime());
 
+            // If possible (frequency of lidar is smaller or equal to the frequency of the camera that sent the event), send tracked object immediately
             if (event.getTime() + lidarWorker.getFrequency() <= currentTick) {
 
                 List<TrackedObject> trackedObjects = new ArrayList<>();
@@ -56,20 +57,6 @@ public class LiDarService extends MicroService {
                 for (DetectedObject detectedObject : event.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object from the LiDAR database
                     StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId(), event.getTime());
-
-                    // Check for errors in the cloud points data
-                    if (StampedCloudPoints != null && StampedCloudPoints.getId().equals("ERROR")) {
-                        String errorDescription = getName() + " disconnected";
-                        System.out.println(errorDescription + " on tick " + currentTick + ".");
-                        // Update CrashOutputManager
-                        CrashOutputManager.getInstance().setFaultySensor(getName());
-                        CrashOutputManager.getInstance().setErrorDescription(errorDescription);
-                        // Terminate
-                        lidarWorker.setStatus(STATUS.ERROR);
-                        sendBroadcast(new CrashedBroadcast(getName()));
-                        terminate();
-                        return;
-                    }
 
                     // Create a TrackedObject with the retrieved cloud points and event data
                     TrackedObject trackedObject = new TrackedObject(
@@ -102,16 +89,38 @@ public class LiDarService extends MicroService {
 
         // Subscribe to TickBroadcast
         subscribeBroadcast(TickBroadcast.class, tick -> {
-            // Increment Current tick
-            currentTick++;
+            // Update Current tick
+            currentTick = tick.getCurrentTick();
 
             // Check LiDar status before processing
             if (lidarWorker.getStatus() != STATUS.UP) {
                 return;
             }
 
-            int currentTick = tick.getCurrentTick(); // Get the current tick
-            int frequency = lidarWorker.getFrequency(); // Get the frequency
+            // Check for errors in the cloud points data at current tick
+            List<StampedCloudPoints> stampedCloudPointsAtCurrentTick = LiDarDataBase.getInstance().getListOfCloudPointsAtTime(currentTick);
+            for (StampedCloudPoints stampedCloudPoints : stampedCloudPointsAtCurrentTick) {
+                if (stampedCloudPoints != null && stampedCloudPoints.getId().equals("ERROR")) {
+
+                    String errorDescription = getName() + " disconnected";
+
+                    System.out.println(errorDescription + " on tick " + currentTick + ".");
+
+                    // Update CrashOutputManager
+                    CrashOutputManager.getInstance().setFaultySensor(getName());
+                    CrashOutputManager.getInstance().setErrorDescription(errorDescription);
+
+                    lidarWorker.setStatus(STATUS.ERROR);
+                    sendBroadcast(new CrashedBroadcast(getName()));
+                    terminate();
+                    return;
+                }
+            }
+
+            // Continue processing detected object events if there is no error
+
+            // Get the frequency
+            int frequency = lidarWorker.getFrequency();
 
             // Initialize an empty list to store tracked objects
             List<TrackedObject> trackedObjects = new ArrayList<>();
@@ -125,23 +134,6 @@ public class LiDarService extends MicroService {
                 for (DetectedObject detectedObject : eventToProcess.getDetectedObjects()) {
                     // Retrieve cloud points for the detected object from the LiDAR database
                     StampedCloudPoints StampedCloudPoints = LiDarDataBase.getInstance().getCloudPoints(detectedObject.getId(), eventToProcess.getTime());
-
-                    // Check for errors in the cloud points data
-                    if (StampedCloudPoints != null && StampedCloudPoints.getId().equals("ERROR")) {
-
-                        String errorDescription = getName() + " disconnected";
-
-                        System.out.println(errorDescription + " on tick " + currentTick + ".");
-
-                        // Update CrashOutputManager
-                        CrashOutputManager.getInstance().setFaultySensor(getName());
-                        CrashOutputManager.getInstance().setErrorDescription(errorDescription);
-
-                        lidarWorker.setStatus(STATUS.ERROR);
-                        sendBroadcast(new CrashedBroadcast(getName()));
-                        terminate();
-                        return;
-                    }
 
                     // Create a TrackedObject with the retrieved cloud points and event data
                     TrackedObject trackedObject = new TrackedObject(

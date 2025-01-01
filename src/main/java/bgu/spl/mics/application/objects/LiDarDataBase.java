@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +42,17 @@ public class LiDarDataBase {
 
     public static LiDarDataBase getInstance() {
         return LDBHolder.instance; // Ensures initialization
+    }
+
+    // Retrieves a list of all StampedCloudPoints at a specific time, used to check for errors at every tick in lidar
+    public List<StampedCloudPoints> getListOfCloudPointsAtTime(int time) {
+        List<StampedCloudPoints> matchingCloudPoints = new ArrayList<>();
+        for (StampedCloudPoints cloud : cloudPoints) {
+            if (cloud.getTime() == time) {
+                matchingCloudPoints.add(cloud);
+            }
+        }
+        return matchingCloudPoints;
     }
 
     /**
