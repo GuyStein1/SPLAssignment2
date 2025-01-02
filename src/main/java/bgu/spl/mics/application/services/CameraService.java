@@ -95,14 +95,6 @@ public class CameraService extends MicroService {
                         " objects at tick " + currentTick);
             }
 
-            // Process pending detections to send events according to frequency
-            while (!detections.isEmpty() && detections.peek().getTime() + camera.getFrequency() == currentTick) {
-                StampedDetectedObjects detectionToSend = detections.poll();
-                sendEvent(new DetectObjectsEvent(detectionToSend));
-                System.out.println(getName() + " sent DetectObjectsEvent with " + detectionToSend.getDetectedObjects().size() +
-                        " objects at tick " + currentTick);
-            }
-
             // Check if the camera has no more detections
             if (detections.isEmpty() && camera.hasNoMoreDetections(currentTick)) {
                 System.out.println(getName() + " has no more detections. Moving to DOWN status.");
@@ -111,6 +103,13 @@ public class CameraService extends MicroService {
                 terminate();
             }
 
+            // Process pending detections to send events according to frequency
+            while (!detections.isEmpty() && detections.peek().getTime() + camera.getFrequency() == currentTick) {
+                StampedDetectedObjects detectionToSend = detections.poll();
+                sendEvent(new DetectObjectsEvent(detectionToSend));
+                System.out.println(getName() + " sent DetectObjectsEvent with " + detectionToSend.getDetectedObjects().size() +
+                        " objects at tick " + currentTick);
+            }
         });
 
         // Subscribe to CrashedBroadcast
