@@ -130,15 +130,6 @@ public class FusionSlamService extends MicroService {
             }
         });
 
-        // Subscribe to TickBroadcast
-        subscribeBroadcast(TickBroadcast.class, tick -> {
-            int currentTick = tick.getCurrentTick();
-
-            System.out.println("FusionSlamService received TickBroadcast: Tick " + currentTick +
-                    ". FusionSlamService Status: Active Sensors = "
-                    + fusionSlam.getActiveSensors());
-        });
-
         // Subscribe to CrashedBroadcast
         subscribeBroadcast(CrashedBroadcast.class, broadcast -> {
             System.out.println("FusionSlamService received CrashBroadcast from " + broadcast.getSenderId() +  ". Terminating.");
