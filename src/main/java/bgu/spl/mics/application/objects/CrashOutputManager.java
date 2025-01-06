@@ -92,6 +92,7 @@ public class CrashOutputManager {
         JsonObject landmarksJson = new JsonObject();
         for (LandMark landmark : FusionSlam.getInstance().getLandmarks()) {
             JsonObject landmarkJson = new JsonObject();
+            landmarkJson.addProperty("id", landmark.getId());
             landmarkJson.addProperty("description", landmark.getDescription());
             landmarkJson.add("coordinates", gson.toJsonTree(landmark.getCoordinates()));
 
