@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class GurionRockRunner {
         String configPath = args[0];
         File configFile = new File(configPath);
         String configDirectory = configFile.getParent(); // Extract the directory containing the config file
+        FusionSlam.getInstance().setOutputPath(configDirectory + FileSystems.getDefault().getSeparator());
 
         try (FileReader reader = new FileReader(configPath)) {
             // Parse the configuration file into a JsonObject

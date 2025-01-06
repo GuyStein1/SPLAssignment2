@@ -20,6 +20,9 @@ public class FusionSlam {
     private boolean crashed;
     private boolean timeTerminated;
 
+    // Used to put the output file in the same directory as config file
+    private String outputPath;
+
     private final Object lock = new Object();
 
     // Singleton Holder
@@ -40,6 +43,17 @@ public class FusionSlam {
         terminated = false;
         crashed = false;
         timeTerminated = false;
+        outputPath = "";
+    }
+
+    // Setter for output path which will be set once in the main
+    public void setOutputPath (String outputPath) {
+        this.outputPath = outputPath;
+    }
+
+    // Getter for output path
+    public String getOutputPath() {
+        return outputPath;
     }
 
     // Setter for active cameras

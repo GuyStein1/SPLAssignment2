@@ -103,7 +103,7 @@ public class FusionSlamService extends MicroService {
                     terminate();
                 }
             } else {
-                String sensorType = broadcast.getSenderId().split("_")[0];
+                String sensorType = broadcast.getSenderId().split(" ")[0];
                 if ("Camera".equals(sensorType)) {
                     fusionSlam.setActiveCameras(fusionSlam.getActiveCameras() - 1);
                     fusionSlam.setActiveSensors(fusionSlam.getActiveSensors() - 1);
@@ -186,7 +186,7 @@ public class FusionSlamService extends MicroService {
         output.add("landMarks", landMarksJson);
 
         // Write JSON to output file
-        try (FileWriter writer = new FileWriter("output_file.json")) {
+        try (FileWriter writer = new FileWriter(fusionSlam.getOutputPath() + "output_file.json")) {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             gson.toJson(output, writer);
             System.out.println("FusionSlamService: Output written to output_file.json");

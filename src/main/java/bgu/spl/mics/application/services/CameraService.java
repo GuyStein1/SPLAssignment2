@@ -35,7 +35,7 @@ public class CameraService extends MicroService {
      * @param camera The Camera object that this service will use to detect objects.
      */
     public CameraService(Camera camera) {
-        super("Camera_" + camera.getID());
+        super("Camera " + camera.getID());
         this.camera = camera;
         detections = new LinkedList<>();
     }

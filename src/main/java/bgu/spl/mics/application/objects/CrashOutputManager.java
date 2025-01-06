@@ -79,28 +79,32 @@ public class CrashOutputManager {
         for (LiDarWorkerTracker lidar : liDars) {
             List<TrackedObject> lastTracked = lidar.getLastTrackedObjects();
             if (!lastTracked.isEmpty()) {
-                lidarJson.add("LiDarWorkerTracker" + lidar.getId(), gson.toJsonTree(lastTracked));
+                lidarJson.add("LiDarTrackerWorker" + lidar.getId(), gson.toJsonTree(lastTracked));
             }
         }
-        output.add("lastLiDarWorkerTrackersFrame", lidarJson);
+        output.add("lastLidarFrames", lidarJson);
 
         output.add("poses", gson.toJsonTree(FusionSlam.getInstance().getPoses()));
-        output.add("statistics", gson.toJsonTree(StatisticalFolder.getInstance()));
 
-        // Add landmarks to output
+        JsonObject statisticsWithLandmarks = gson.toJsonTree(StatisticalFolder.getInstance()).getAsJsonObject();
+
+        // Create a JsonObject for landmarks
         JsonObject landmarksJson = new JsonObject();
         for (LandMark landmark : FusionSlam.getInstance().getLandmarks()) {
             JsonObject landmarkJson = new JsonObject();
-            landmarkJson.addProperty("id", landmark.getId());
             landmarkJson.addProperty("description", landmark.getDescription());
             landmarkJson.add("coordinates", gson.toJsonTree(landmark.getCoordinates()));
 
+            // Use the landmark's ID as the key in the landmarks object
             landmarksJson.add(landmark.getId(), landmarkJson);
         }
-        output.add("landmarks", landmarksJson);
+        statisticsWithLandmarks.add("landmarks", landmarksJson);
+
+        // Add the combined object to the output
+        output.add("statistics", statisticsWithLandmarks);
 
         // Write to file
-        try (FileWriter writer = new FileWriter("output_file.json")) {
+        try (FileWriter writer = new FileWriter(FusionSlam.getInstance().getOutputPath() + "output_file.json")) {
             gson.toJson(output, writer);
             System.out.println("CrashOutputManager: Crash output written to output_file.json");
         } catch (IOException e) {
