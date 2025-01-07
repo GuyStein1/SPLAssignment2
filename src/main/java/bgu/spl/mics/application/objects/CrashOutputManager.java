@@ -105,9 +105,9 @@ public class CrashOutputManager {
         output.add("statistics", statisticsWithLandmarks);
 
         // Write to file
-        try (FileWriter writer = new FileWriter(FusionSlam.getInstance().getOutputPath() + "output_file.json")) {
+        try (FileWriter writer = new FileWriter(FusionSlam.getInstance().getOutputPath() + "OutputError.json")) {
             gson.toJson(output, writer);
-            System.out.println("CrashOutputManager: Crash output written to output_file.json");
+            System.out.println("CrashOutputManager: Crash output written to OutputError.json");
         } catch (IOException e) {
             System.err.println("CrashOutputManager: Failed to write crash output. " + e.getMessage());
         }
