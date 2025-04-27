@@ -84,5 +84,5 @@ Important Notes:
 - FusionSLAM transforms object coordinates based on the robot's current pose at the time of detection.
 
 Authors:
-Guy Stein
-Guy Zilberstein
+-Guy Stein
+-Guy Zilberstein
